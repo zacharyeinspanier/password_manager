@@ -1,0 +1,74 @@
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+ui/build
+ui/*~
+ui/*.autosave
+ui/*.a
+ui/*.core
+ui/*.moc
+ui/*.o
+ui/*.obj
+ui/*.orig
+ui/*.rej
+ui/*.so
+ui/*.so.*
+ui/*_pch.h.cpp
+ui/*_resource.rc
+ui/*.qm
+ui/.#*
+ui/*.*#
+ui/core
+ui/!core/
+ui/tags
+ui/.DS_Store
+ui/.directory
+ui/*.debug
+ui/Makefile*
+ui/*.prl
+ui/*.app
+ui/moc_*.cpp
+ui/ui_*.h
+ui/qrc_*.cpp
+ui/Thumbs.db
+ui/*.res
+ui/*.rc
+ui//.qmake.cache
+ui//.qmake.stash
+
+# qtcreator generated files
+ui/*.pro.user*
+ui/CMakeLists.txt.user*
+
+# xemacs temporary files
+ui/*.flc
+
+# Vim temporary files
+ui/.*.swp
+
+# Visual Studio generated files
+ui/*.ib_pdb_index
+ui/*.idb
+ui/*.ilk
+ui/*.pdb
+ui/*.sln
+ui/*.suo
+ui/*.vcproj
+ui/*vcproj.*.*.user
+ui/*.ncb
+ui/*.sdf
+ui/*.opensdf
+ui/*.vcxproj
+ui/*vcxproj.*
+
+# MinGW generated files
+ui/*.Debug
+ui/*.Release
+
+# Python byte code
+ui/*.pyc
+
+# Binaries
+# --------
+ui/*.dll
+ui/*.exe
+

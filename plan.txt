@@ -1,0 +1,21 @@
+1: Front End user interface
+    a: users can login, and create an account
+    b: users can see a list of all usernames/passwords
+    c: users can search using search bar
+
+2: User object
+    a: users will have a list of all username/passwords 
+    b: user will be able to add and remove passwords
+    c: user will be able to encrypt new passwords and decrypt passwords
+
+3: Storing data
+    a: data can be stored in an sql data base
+    b: data can be loaded from sql data base
+
+4: How usernames/passwords are stored  
+    Hashmap<string, hashmap<string, string>>
+
+    <account> : 
+        username: <username>
+        password: <encrypted password>
+        description: <descriotion>
