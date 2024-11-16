@@ -1,0 +1,4 @@
+1: When a user clicks the login button, the user account pannel opens.
+    a: authentication is not required at this time
+
+2: when a user clicks the create account button, the account creation pannel opens. 

@@ -19,3 +19,5 @@
         username: <username>
         password: <encrypted password>
         description: <descriotion>
+        date_created:
+        date_modified:

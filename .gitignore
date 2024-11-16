@@ -72,3 +72,4 @@ ui/*.pyc
 ui/*.dll
 ui/*.exe
 
+.env
