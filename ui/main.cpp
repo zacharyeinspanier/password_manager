@@ -3,6 +3,9 @@
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
+#include <QMessageBox>
+
+QString env_db_path = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -17,7 +20,23 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+    // Load Enviroment Variable
     MainWindow w;
-    w.show();
-    return a.exec();
+    char* env_db_path_raw = std::getenv("DB_PATH");
+    if(env_db_path_raw == nullptr){
+        QString err_msg = "The enviroment variable DB_PATH is not sourced";
+        QMessageBox errMsgBox;
+        errMsgBox.setIcon(QMessageBox::Critical);
+        errMsgBox.setText(err_msg);
+        errMsgBox.setStandardButtons(QMessageBox::Ok);
+        errMsgBox.exec();
+        QApplication::quit();
+        return 1;
+    }else{
+        env_db_path = QString::fromStdString(std::string(env_db_path_raw));
+        w.SetDBPath(&env_db_path);
+        w.show();
+        return a.exec();
+    }
 }

@@ -4,6 +4,18 @@
 #include "useraccount.h"
 #include <QMessageBox>
 #include <cstdlib>
+#include <QSqlQuery>
+#include <QSqlRecord>
+#include <QVariant>
+
+void display_message(QString msg, QMessageBox::Icon icon){
+    QMessageBox errMsgBox;
+    errMsgBox.setIcon(icon);
+    errMsgBox.setText(msg);
+    errMsgBox.setStandardButtons(QMessageBox::Ok);
+    errMsgBox.exec();
+}
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,66 +29,127 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::SetDBPath(QString *env_db_path){
+    this->db_path = env_db_path;
+}
+
+QSqlDatabase MainWindow::GetDatabase(){
+
+    QSqlDatabase db_con = QSqlDatabase::addDatabase("QSQLITE");
+    db_con.setDatabaseName(*this->db_path);
+    return db_con;
+}
 
 void MainWindow::on_create_acc_btn_clicked()
 {
-    QSqlDatabase db_con = QSqlDatabase::addDatabase("QSQLITE");
-    char* env_db_path = std::getenv("DB_PATH");
-    QString db_path;
-    if(env_db_path == nullptr){
-        db_path = "null ptr";
-    }else{
-        db_path = QString::fromStdString(std::string(env_db_path));
+    QSqlDatabase db_con = this->GetDatabase();
+    if (!db_con.open())
+    {
+        QString err_msg = "The Data Base could not be opened";
+        display_message(err_msg, QMessageBox::Critical);
+        QApplication::quit();
+        return;
     }
 
-    //TODO: Database path should be an .env var, or a global path
-    //db_con.setDatabaseName(db_path);
-    QString msg = db_path;
+    QString username = this->ui->username_input->text();
+    QString password = this->ui->password_input->text();
+    bool user_exists = true;
 
-    // if (db_con.open())
-    // {
-    //     msg = "db is open!!";
+    //Check if user account exists
+    QSqlQuery userExistsQuery(db_con);
+    userExistsQuery.prepare("SELECT * FROM accounts WHERE USERNAME = :username");
+    userExistsQuery.bindValue(":username", username);
+    if(userExistsQuery.exec()){
+        user_exists = userExistsQuery.next() ? true : false;
+    }else{
+        QString err_msg = "Tried to query database but something went wrong";
+        display_message(err_msg, QMessageBox::Critical);
+        QApplication::quit();
+        db_con.close();
+        return;
+    }
 
+    // Insert into DB
+    if(!user_exists){
+        //Insert user into accounts
+        QSqlQuery insertUserQuery(db_con);
+        insertUserQuery.prepare("INSERT INTO accounts (USERNAME, PASSWORD) VALUES (:username, :password)");
+        insertUserQuery.bindValue(":username", username);
+        insertUserQuery.bindValue(":password", password);
 
-    // }else{
-    //     msg = "db is not open:(";
-    // }
+        if(insertUserQuery.exec()){
+            QString info_msg = "Create account was successful";
+            display_message(info_msg, QMessageBox::Information);
+        }
+        else{
+            QString info_msg = "could not add user, something went wrong";
+            display_message(info_msg, QMessageBox::Information);
+            QApplication::quit();
+            db_con.close();
+            return;
+        }
 
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText(msg);
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.exec();
-    QApplication::quit();
-
-    //1: get username and password from input boxes
-    //2: check if connection to db is open
-    //3: check if username already exists
-    //4: generate userid
-    //5: insert into user table
-
-    // We will just update the buttons that are displayed
-    // So create accont will have:
-        // Input: user name
-        // Input: password
-        // Input: re-type password
-        // Button: back to login
-        // Button: Register account
-
-    // Temporary action while learning how to use QT
-//     this->hide();
-//     createAccount account_creation;
-//     account_creation.setModal(true);
-//     account_creation.exec();
+    }else{
+        QString err_msg = "The username " + username + " already exists. Pick a new username";
+        this->ui->username_input->setText("");
+        this->ui->password_input->setText("");
+        display_message(err_msg, QMessageBox::Warning);
+    }
+    db_con.close();
 }
 
 
 void MainWindow::on_login_btn_clicked()
 {
+    QSqlDatabase db_con = this->GetDatabase();
+    if (!db_con.open())
+    {
+        QString err_msg = "The Data Base could not be opened";
+        display_message(err_msg, QMessageBox::Critical);
+        QApplication::quit();
+        return;
+    }
 
-    user_account = new userAccount(this);
-    user_account -> show();
-    this->hide();
+    QString username = this->ui->username_input->text();
+    QString password = this->ui->password_input->text();
+
+    QSqlQuery userAuthenticateQuery(db_con);
+    userAuthenticateQuery.prepare("SELECT * FROM accounts WHERE USERNAME = :username AND PASSWORD = :password");
+    userAuthenticateQuery.bindValue(":username", username);
+    userAuthenticateQuery.bindValue(":password", password);
+
+
+    if(userAuthenticateQuery.exec()){
+        if(userAuthenticateQuery.next()){
+            QSqlRecord rec = userAuthenticateQuery.record();
+            int username_index =  rec.indexOf("USERNAME");
+            int password_index =  rec.indexOf("PASSWORD");
+            int userid_index =  rec.indexOf("USERID");
+            QString username_query = userAuthenticateQuery.value(username_index).toString();
+            QString password_query = userAuthenticateQuery.value(password_index).toString();
+            int userid_query = userAuthenticateQuery.value(userid_index).toInt();
+
+            QString info_msg = " Username: " + username_query + " Password: " + password_query + " User Id: " + QString::number(userid_query);
+            display_message(info_msg, QMessageBox::Information);
+        }
+        else{
+            QString err_msg = "There is no account for the username " + username + ". Please create an account.";
+            display_message(err_msg, QMessageBox::Information);
+        }
+
+    }else{
+        QString err_msg = "Tried to query database but something went wrong";
+        display_message(err_msg, QMessageBox::Critical);
+        QApplication::quit();
+        db_con.close();
+        return;
+    }
+
+    db_con.close();
+
+
+    //3: actually login
 
 }
+
 
