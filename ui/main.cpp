@@ -6,7 +6,7 @@
 #include <QMessageBox>
 
 QString env_db_path = NULL;
-
+// User account
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
