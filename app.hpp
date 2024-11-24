@@ -1,55 +1,66 @@
 #include <iostream>
+#include <vector>
+#include <thread>
+#include <condition_variable>
+#include <dataTypes.cpp>
 
-namespace app{
-    // bool operations
-    // cond_var operation_evet
-    // mutex operation mutex
-    // Queue<Operations> operations_queue
+using namespace std;
 
-    void operation_event(){
-        // thread will need access to user account
-        // passwords will have unique id number to retrieve them from hash map
-    }
+mutex user_account_mutex; 
 
-    // std::string search_term
-    // mutex search_term_mutex
-    // cond_var search_term_cond_var
-    // bool search_processed
+bool operation_event;
+condition_variable operation_cv;
+mutex operation_mutex;
+Operation operations;
 
-    void process_search_bar(){
-        // this thread will search through the list of passwords
-        // search results will then be passed to display content
+// thread will need access to user account
+// passwords will have unique id number to retrieve them from hash map
+void operation_event();
 
-        // will need reference to user account to get read access to passwords
-        // pointers to password struct are added to list
-        // call back to display_content::reload_display_list()
+bool search_event;
+string search_term;
+mutex search_term_mutex;
+condition_variable search_term_cv;
+// this thread will search through the list of passwords
+// search results will then be passed to display content
 
-    }
-
-    void launch_app(){
-        // Initialize all variables
-        // start threads
-        // create_display content
-    }
+// will need reference to user account to get read access to passwords
+// pointers to password struct are added to list
+// call back to display_content::reload_display_list()
+void process_search_bar();
 
 
-    class display_content{
-        // This class will be passed to the user account window
-        
-        // list<Passwords *> display list
+// when operations happen, data needs to be stored in the data base
+// or every so often data needs to be stored
+// or maybe on a button click
+void periodic_data_store();
 
-        // void reload_display_list(){}
-        // List<> get_display_list(){}
+class DisplayContent{
+    private:
+        vector<password *> display_passwords;
+        condition_variable * operation_cv_ptr;
+        condition_variable * search_term_cv_ptr;
 
-        void queue_operation(){
-            // use as call back fn
-            // queue opteration and notify cond var
-        } 
-
-        void search(){
-            // This function will update search term
-            // and notify the cond var
-        }
+    public:
+    DisplayContent(vector<password *> display_passwords, condition_variable * operation_cv_ptr, condition_variable * search_term_cv_ptr);
     
-    };
+    // This function will be called by process_search_bar() after a search is complete
+    // the private member display_passwords will be updated to be the result of the search
+    void reload_display_list();
+
+    vector<password> get_display_list();
+
+    // use as call back fn
+    // queue opteration and notify cond var
+    void queue_operation();
+    
+    // This function will update search term
+    // and notify the cond var
+    void search(); 
 };
+
+
+// Initialize all variables
+// start threads
+// create_display content
+void launch_app();

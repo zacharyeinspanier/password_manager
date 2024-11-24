@@ -2,15 +2,10 @@
 #include <unordered_map>
 #include <thread>
 #include <vector>
+#include <dataTypes.cpp>
 
 using namespace std;
-struct password{
-    string username;
-    string password;
-    string modify_date;
-    string date_created;
-    string description;
-};
+
 
 class UserAccount{
     private:
@@ -34,5 +29,4 @@ class UserAccount{
 
         unordered_map<string, password *> * get_read_map_username();
         unordered_map<string, password *> * get_read_map_description();
-
 };
