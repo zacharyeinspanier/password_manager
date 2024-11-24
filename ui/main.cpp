@@ -21,6 +21,18 @@ int main(int argc, char *argv[])
         }
     }
 
+
+    // Main() plan
+    //1: load database
+    //2: user authentication
+    //3: on success of user authentication load user passwords
+    //4: create useraccount
+    //5: call useraccount::data
+    //6: call app launch app
+    //7: quit mainwindow
+    //8: create window; account window
+    //9: display account window. 
+
     // Load Enviroment Variable
     MainWindow w;
     char* env_db_path_raw = std::getenv("DB_PATH");

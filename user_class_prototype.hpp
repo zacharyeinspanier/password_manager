@@ -1,37 +1,38 @@
+#include <iostream>
+#include <unordered_map>
+#include <thread>
+#include <vector>
 
-
-// Find out if there is an equvolant of arc for c++ 
-// passwords will need to be stored  somewhere
-// arc will allow the data to be stored somethere and reference to be passed around
-// store ppinter within hashmap
+using namespace std;
 struct password{
-    // string useranme
-    // string password
-    // modify date
-    // created date
-    // description
+    string username;
+    string password;
+    string modify_date;
+    string date_created;
+    string description;
 };
 
 class UserAccount{
     private:
-        // Hashmap<string, Password * > username_map
-        // Hashmap<string, Password * > descrioption_map
-        // mutex muteate_password> 
-        // String account_username
-        // int user_id
+        unordered_map<string, password *> username_map;
+        unordered_map<string, password *> descrioption_map;
+        mutex password_mutex;
+        string account_username;
+        int user_id;
 
-
-        // string encrypt data()
-        // string decryp date()
+        string encrypt_data(string password);
+        string decrypt_data(string password);
     public:
 
-        // static UserAccount LoadData()
+        UserAccount(string username, int user_id);
+        UserAccount(string username, int user_id, vector<password> user_data);
+        ~UserAccount();
 
-        // void add_password()
-        // void remove_password()
-        // void modify_password()
+        void add_password();
+        void remove_password();
+        void modify_password();
 
-        // Hashmap * get_read_map_username()
-        // Hashmap * get_read_map_description()
+        unordered_map<string, password *> * get_read_map_username();
+        unordered_map<string, password *> * get_read_map_description();
 
 };
