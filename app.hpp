@@ -1,10 +1,11 @@
+#ifndef APP // APP include gurard: app is only included once. 
+#define APP
+
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <condition_variable>
 #include <dataTypes.cpp>
-
-using namespace std;
 
 mutex user_account_mutex; 
 
@@ -13,14 +14,15 @@ condition_variable operation_cv;
 mutex operation_mutex;
 Operation operations;
 
-// thread will need access to user account
-// passwords will have unique id number to retrieve them from hash map
-void operation_event();
-
 bool search_event;
 string search_term;
 mutex search_term_mutex;
 condition_variable search_term_cv;
+
+// thread will need access to user account
+// passwords will have unique id number to retrieve them from hash map
+void operation_event();
+
 // this thread will search through the list of passwords
 // search results will then be passed to display content
 
@@ -37,12 +39,12 @@ void periodic_data_store();
 
 class DisplayContent{
     private:
-        vector<password *> display_passwords;
+        vector<shared_ptr<password>> display_passwords;
         condition_variable * operation_cv_ptr;
         condition_variable * search_term_cv_ptr;
 
     public:
-    DisplayContent(vector<password *> display_passwords, condition_variable * operation_cv_ptr, condition_variable * search_term_cv_ptr);
+    DisplayContent(vector<shared_ptr<password>> display_passwords, condition_variable * operation_cv_ptr, condition_variable * search_term_cv_ptr);
     
     // This function will be called by process_search_bar() after a search is complete
     // the private member display_passwords will be updated to be the result of the search
@@ -64,3 +66,5 @@ class DisplayContent{
 // start threads
 // create_display content
 void launch_app();
+
+#endif
