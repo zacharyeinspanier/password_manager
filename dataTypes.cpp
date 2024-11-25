@@ -25,7 +25,7 @@ enum operationType{
 };
 
 
-struct Operation{
+struct operation{
     operationType operation_type;
     int password_id; // Add operations will not need this
 };
