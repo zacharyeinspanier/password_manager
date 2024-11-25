@@ -6,8 +6,10 @@
 #include <thread>
 #include <condition_variable>
 #include <dataTypes.cpp>
+#include <userAccount.hpp>
 
 mutex user_account_mutex; 
+UserAccount * usr_acc;
 
 bool operation_event;
 condition_variable operation_cv;
@@ -19,6 +21,9 @@ string search_term;
 mutex search_term_mutex;
 condition_variable search_term_cv;
 
+mutex search_results_mutex;
+vector<shared_ptr<password>> search_results;
+
 // thread will need access to user account
 // passwords will have unique id number to retrieve them from hash map
 void operation_event();
@@ -28,9 +33,7 @@ void operation_event();
 
 // will need reference to user account to get read access to passwords
 // pointers to password struct are added to list
-// call back to display_content::reload_display_list()
 void process_search_bar();
-
 
 // when operations happen, data needs to be stored in the data base
 // or every so often data needs to be stored
@@ -39,32 +42,32 @@ void periodic_data_store();
 
 class DisplayContent{
     private:
-        vector<shared_ptr<password>> display_passwords;
-        condition_variable * operation_cv_ptr;
-        condition_variable * search_term_cv_ptr;
+        vector<password> display_passwords;
 
+        void reload_display_list();
     public:
     DisplayContent(vector<shared_ptr<password>> display_passwords, condition_variable * operation_cv_ptr, condition_variable * search_term_cv_ptr);
-    
-    // This function will be called by process_search_bar() after a search is complete
-    // the private member display_passwords will be updated to be the result of the search
-    void reload_display_list();
 
     vector<password> get_display_list();
 
-    // use as call back fn
     // queue opteration and notify cond var
-    void queue_operation();
+    void operation_event();
     
-    // This function will update search term
     // and notify the cond var
-    void search(); 
+    void search_event(); 
 };
 
 
 // Initialize all variables
 // start threads
 // create_display content
-void launch_app();
+DisplayContent launch_app();
+
+
+// App work flow
+// poll for input 500 ms
+// process action
+// DisplayContent::get_display_list()
+    // DisplayContent::reload_display_list()
 
 #endif

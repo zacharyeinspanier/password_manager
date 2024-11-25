@@ -1,13 +1,20 @@
 #include <iostream>
+#include <thread>
+#include <ctime>
 using namespace std;
 
 struct password{
     string username;
     string password;
-    string modify_date;
-    string date_created;
     string description;
+    string url;
+    time_t modify_date;
+    time_t date_created;
     int p_id;
+    mutex mutx;
+
+    string encrypt_data(string password);
+    string decrypt_data();
 };
 
 enum operationType{

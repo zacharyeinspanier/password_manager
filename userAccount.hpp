@@ -10,14 +10,15 @@
 
 class UserAccount{
     private:
+        unordered_map<int, shared_ptr<password>> pass_id_map;
         unordered_map<string, shared_ptr<password>> username_map;
         unordered_map<string, shared_ptr<password>> descrioption_map;
-        mutex password_mutex;
+        mutex username_map_mutex;
+        mutex descrioption_map_mutex;
         string account_username;
         int user_id;
 
-        string encrypt_data(string password);
-        string decrypt_data(string password);
+        
     public:
 
         UserAccount(string username, int user_id);
@@ -27,6 +28,7 @@ class UserAccount{
         void add_password();
         void remove_password();
         void modify_password();
+        string view_password();
 
         unordered_map<string, shared_ptr<password>> * get_read_map_username();
         unordered_map<string, shared_ptr<password>> * get_read_map_description();
