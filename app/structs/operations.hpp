@@ -8,6 +8,11 @@ enum operationType{
     VIEW
 };
 
+enum modifyType{
+    PASSWORD,
+    DESCRIPTION,
+};
+
 
 struct operation{
     operationType operation_type;
