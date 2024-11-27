@@ -11,9 +11,9 @@
 class UserAccount{
     private:
         std::unordered_map<int, std::shared_ptr<password>> pass_id_map;
-        std::unordered_map<std::string, std::vector<password *>> url_map;
-        std::unordered_map<std::string, std::vector<password *>> username_map;
-        std::unordered_map<std::string, std::vector<password *>> descrioption_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> url_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> username_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> descrioption_map;
         std::mutex username_map_mutex;
         std::mutex descrioption_map_mutex;
         std::string account_username;
