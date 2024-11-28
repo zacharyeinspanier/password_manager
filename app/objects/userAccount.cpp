@@ -9,53 +9,64 @@ UserAccount::UserAccount(std::string username, int user_id){
 UserAccount::UserAccount(std::string username, int user_id, std::vector<password> user_data){
     this->account_username = username;
     this->user_id = user_id;
-    //each password must be wrapped in a shared pinter
 
     for(int i = 0; i < user_data.size(); ++i){
-        password cpy_password_for_maps;
-        password * prt_password_cpy = &cpy_password_for_maps;
-        memcpy(prt_password_cpy, &user_data[i], sizeof(user_data[i]));
-        std::shared_ptr<password> pass_id_map(prt_password_cpy);
-        std::shared_ptr<password> pass_url_map_ptr(prt_password_cpy);
-        std::shared_ptr<password> pass_desc_map(prt_password_cpy);
-        std::shared_ptr<password> pass_usr_map(prt_password_cpy);
-        try{
-            this->descrioption_map.at(prt_password_cpy->description).push_back(pass_desc_map);
-            this->url_map.at(prt_password_cpy->url).push_back(pass_url_map_ptr);
-            this->username_map.at(prt_password_cpy->username).push_back(pass_usr_map);
-            this->pass_id_map[prt_password_cpy->p_id] = pass_id_map;
-
-        }catch (...) {
-            std::cout << "could not insert password" << std::endl;
-            throw;
-        }
-
+        this->add_password(&user_data[i]);
     }
 }
 
-void UserAccount::add_password(password new_password){
-    password * prt_new_password = &new_password;
+void UserAccount::add_password(password * new_password){
+    // Copy password
+    password cpy_new_password;
+    password * prt_new_password = &cpy_new_password;
+    memcpy(prt_new_password, new_password, sizeof(password));
+
+    // shared pointers
     std::shared_ptr<password> pass_id_map(prt_new_password);
     std::shared_ptr<password> pass_url_map_ptr(prt_new_password);
     std::shared_ptr<password> pass_desc_map(prt_new_password);
-    std::shared_ptr<password> pass_usr_map(prt_new_password);
-   
+    std::shared_ptr<password> pass_usr_map(prt_new_password); 
 
     try{
-        this->descrioption_map.at(prt_new_password->description).push_back(pass_desc_map);
-        this->url_map.at(prt_new_password->url).push_back(pass_url_map_ptr);
-        this->username_map.at(prt_new_password->username).push_back(pass_usr_map);
+        std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+         //description map
+        if(this->descrioption_map.contains(prt_new_password->description)){
+                this->descrioption_map.at(prt_new_password->description).push_back(pass_desc_map);
+        }else{
+            std::vector<std::shared_ptr<password>> map_vec;
+            map_vec.push_back(pass_desc_map);
+            this->descrioption_map.emplace(std::make_pair(prt_new_password->description, map_vec));
+        }
+
+        //url map
+        if(this->url_map.contains(prt_new_password->url)){
+                this->url_map.at(prt_new_password->url).push_back(pass_url_map_ptr);
+        }else{
+            std::vector<std::shared_ptr<password>> map_vec;
+            map_vec.push_back(pass_url_map_ptr);
+            this->descrioption_map.emplace(std::make_pair(prt_new_password->url, map_vec));
+        }
+
+        //username map
+        if(this->username_map.contains(prt_new_password->username)){
+            this->username_map.at(prt_new_password->username).push_back(pass_usr_map);
+        }else{
+            std::vector<std::shared_ptr<password>> map_vec;
+            map_vec.push_back(pass_usr_map);
+            this->descrioption_map.emplace(std::make_pair(prt_new_password->username, map_vec));
+        }
+
         this->pass_id_map[prt_new_password->p_id] = pass_id_map;
 
     }catch (...) {
         std::cout << "could not insert password" << std::endl;
         throw;
     }
-
 }
 
 void UserAccount::remove_password(int p_id){
 
+    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     if(this->pass_id_map.contains(p_id)){
         // extract key/value pair from map
         auto node_handle = this->pass_id_map.extract(p_id);
@@ -99,15 +110,48 @@ void UserAccount::remove_password(int p_id){
             }
         }
 
-    }else{
-        std::cout << "Password does not exist." << std::endl;
     }
 }
 
-// userAccount Tests
+void UserAccount::modify_password(int p_id, std::string new_value, modifyType modify_type){
+    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+    if(this->pass_id_map.contains(p_id)){
+        std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
+        std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
+        switch (modify_type) {
+            case modifyType::MODIFY_DESCRIPTION:
+                password_ptr->description = new_value;
+                break;
+            case modifyType::MODIFY_PASSWORD:
+                password_ptr->password = new_value;
+                break;
+            default:
+                std::cout << "Password does not exist.";
+        }
+    }
+}
 
-// Test 1: Add
+std::string UserAccount::view_password(int p_id){
+    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+    if(this->pass_id_map.contains(p_id)){
+        std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
+        std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
+        std::string res = password_ptr->password;
 
-// Test 2: Remove
+        return res;
+    }
+    return "Err not found";
+}
 
-// Test 3: Modify
+std::unordered_map<int, password> UserAccount::get_data_copy(){
+    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+    std::unordered_map<int, password> answer;
+    for(auto it = this->pass_id_map.begin(); it != this->pass_id_map.end(); ++it){
+        std::lock_guard<std::mutex> unordered_map_lock(it->second->password_mutex);
+        password cpy_password;
+        memcpy(&cpy_password, &it->second, sizeof(password));
+        answer.emplace(std::make_pair(cpy_password.p_id, cpy_password));
+    }
+    return answer;
+ }
+

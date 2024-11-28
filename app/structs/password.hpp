@@ -13,7 +13,7 @@ struct password{
     time_t modify_date;
     time_t date_created;
     int p_id;
-    std::mutex mutx;
+    std::mutex password_mutex;
 
     std::string encrypt_data(std::string password);
     std::string decrypt_data();

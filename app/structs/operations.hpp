@@ -9,8 +9,8 @@ enum operationType{
 };
 
 enum modifyType{
-    PASSWORD,
-    DESCRIPTION,
+    MODIFY_PASSWORD,
+    MODIFY_DESCRIPTION,
 };
 
 
