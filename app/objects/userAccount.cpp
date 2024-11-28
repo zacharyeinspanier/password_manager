@@ -155,3 +155,7 @@ std::unordered_map<int, password> UserAccount::get_data_copy(){
     return answer;
  }
 
+ bool UserAccount::contains_password(int p_id){
+    return this->pass_id_map.contains(p_id);
+ }
+

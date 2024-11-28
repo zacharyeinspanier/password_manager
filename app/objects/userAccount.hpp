@@ -28,6 +28,7 @@ class UserAccount{
         void remove_password(int p_id);
         void modify_password(int p_id, std::string new_value, modifyType modify_type);
         std::string view_password(int p_id);
+        bool contains_password(int p_id);
 
         std::unordered_map<int, password> get_data_copy();
 };
