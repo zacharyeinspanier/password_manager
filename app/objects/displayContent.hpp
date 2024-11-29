@@ -1,4 +1,4 @@
-#ifndef DISPLAYCONTENT // APP include gurard: app is only included once. 
+#ifndef DISPLAYCONTENT // DISPLAYCONTENT include gurard: displayContent is only included once. 
 #define DISPLAYCONTENT
 
 #include <iostream>

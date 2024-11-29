@@ -30,28 +30,28 @@ void UserAccount::add_password(password * new_password){
     try{
         std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
          //description map
-        if(this->descrioption_map.contains(prt_new_password->description)){
+        if(this->descrioption_map.find(prt_new_password->description) != this->descrioption_map.end()){
                 this->descrioption_map.at(prt_new_password->description).push_back(pass_desc_map);
         }else{
-            std::vector<std::shared_ptr<password>> map_vec;
+            std::vector<std::shared_ptr<password> > map_vec;
             map_vec.push_back(pass_desc_map);
             this->descrioption_map.emplace(std::make_pair(prt_new_password->description, map_vec));
         }
 
         //url map
-        if(this->url_map.contains(prt_new_password->url)){
+        if(this->url_map.find(prt_new_password->url) != this->url_map.end()){
                 this->url_map.at(prt_new_password->url).push_back(pass_url_map_ptr);
         }else{
-            std::vector<std::shared_ptr<password>> map_vec;
+            std::vector<std::shared_ptr<password> > map_vec;
             map_vec.push_back(pass_url_map_ptr);
             this->descrioption_map.emplace(std::make_pair(prt_new_password->url, map_vec));
         }
 
         //username map
-        if(this->username_map.contains(prt_new_password->username)){
+        if(this->username_map.find(prt_new_password->username) != this->username_map.end()){
             this->username_map.at(prt_new_password->username).push_back(pass_usr_map);
         }else{
-            std::vector<std::shared_ptr<password>> map_vec;
+            std::vector<std::shared_ptr<password> > map_vec;
             map_vec.push_back(pass_usr_map);
             this->descrioption_map.emplace(std::make_pair(prt_new_password->username, map_vec));
         }
@@ -67,12 +67,12 @@ void UserAccount::add_password(password * new_password){
 void UserAccount::remove_password(int p_id){
 
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    if(this->pass_id_map.contains(p_id)){
+    if(this->pass_id_map.find(p_id) != this->pass_id_map.end()){
         // extract key/value pair from map
         auto node_handle = this->pass_id_map.extract(p_id);
         std::shared_ptr<password> removed_password = node_handle.mapped();
-        if(this->url_map.contains(removed_password->url)){
-            std::vector<std::shared_ptr<password>> url_vec = this->url_map.at(removed_password->url);
+        if(this->url_map.find(removed_password->url) != this->url_map.end()){
+            std::vector<std::shared_ptr<password> > url_vec = this->url_map.at(removed_password->url);
             int remove_index = -1;
             for(int i = 0; i < url_vec.size(); ++i){
                 if(url_vec[i]->p_id == p_id){
@@ -84,8 +84,8 @@ void UserAccount::remove_password(int p_id){
             }
    
         }
-        if(this->descrioption_map.contains(removed_password->description)){
-            std::vector<std::shared_ptr<password>> descrioption_vec = this->descrioption_map.at(removed_password->description);
+        if(this->descrioption_map.find(removed_password->description) != this->descrioption_map.end()){
+            std::vector<std::shared_ptr<password> > descrioption_vec = this->descrioption_map.at(removed_password->description);
             int remove_index = -1;
             for(int i = 0; i < descrioption_vec.size(); ++i){
                 if(descrioption_vec[i]->p_id == p_id){
@@ -97,8 +97,8 @@ void UserAccount::remove_password(int p_id){
             }
             
         }
-        if(this->username_map.contains(removed_password->username)){
-            std::vector<std::shared_ptr<password>>  username_vec = this->descrioption_map.at(removed_password->username);
+        if(this->username_map.find(removed_password->username) != this->username_map.end()){
+            std::vector<std::shared_ptr<password> >  username_vec = this->descrioption_map.at(removed_password->username);
             int remove_index = -1;
             for(int i = 0; i < username_vec.size(); ++i){
                 if(username_vec[i]->p_id == p_id){
@@ -115,7 +115,7 @@ void UserAccount::remove_password(int p_id){
 
 void UserAccount::modify_password(int p_id, std::string new_value, modifyType modify_type){
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    if(this->pass_id_map.contains(p_id)){
+    if(this->pass_id_map.find(p_id) != this->pass_id_map.end()){
         std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
         std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
         switch (modify_type) {
@@ -133,7 +133,7 @@ void UserAccount::modify_password(int p_id, std::string new_value, modifyType mo
 
 std::string UserAccount::view_password(int p_id){
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    if(this->pass_id_map.contains(p_id)){
+    if(this->pass_id_map.find(p_id) != this->pass_id_map.end()){
         std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
         std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
         std::string res = password_ptr->password;
@@ -156,6 +156,9 @@ std::unordered_map<int, password> UserAccount::get_data_copy(){
  }
 
  bool UserAccount::contains_password(int p_id){
-    return this->pass_id_map.contains(p_id);
+    if(this->pass_id_map.find(p_id) != this->pass_id_map.end()){
+        return true;
+    }
+    return false;
  }
 

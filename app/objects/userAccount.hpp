@@ -1,4 +1,4 @@
-#ifndef USERACCOUNT // USERACCOUNT include gurard: app is only included once. 
+#ifndef USERACCOUNT // USERACCOUNT include gurard: userAccount is only included once. 
 #define USERACCOUNT
 
 #include <iostream>
@@ -11,10 +11,10 @@
 
 class UserAccount{
     private:
-        std::unordered_map<int, std::shared_ptr<password>> pass_id_map;
-        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> url_map;
-        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> username_map;
-        std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> descrioption_map;
+        std::unordered_map<int, std::shared_ptr<password> > pass_id_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password> > > url_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password> > > username_map;
+        std::unordered_map<std::string, std::vector<std::shared_ptr<password> > > descrioption_map;
         std::mutex unordered_map_mutex;
         std::string account_username;
         int user_id;
