@@ -20,15 +20,15 @@ class UserAccount{
         int user_id;
         
     public:
-        UserAccount(std::string username, int user_id);
-        UserAccount(std::string username, int user_id, std::vector<password> user_data);
+        UserAccount(std::string const username, const int user_id);
+        UserAccount(std::string const username, const int user_id, const std::vector<password> * user_data);
         ~UserAccount();
 
-        void add_password(password * new_password);
-        void remove_password(int p_id);
-        void modify_password(int p_id, std::string new_value, modifyType modify_type);
-        std::string view_password(int p_id);
-        bool contains_password(int p_id);
+        void add_password(const password * new_password);
+        void remove_password(const int p_id);
+        void modify_password(const int p_id, const std::string new_value, const modifyType modify_type);
+        std::string view_password(const int p_id);
+        bool contains_password(const int p_id);
 
         std::unordered_map<int, password> get_data_copy();
 };
