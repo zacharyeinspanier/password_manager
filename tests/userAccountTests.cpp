@@ -34,12 +34,13 @@ void test_two(){
 }
 void test_three(){
     // TEST UserAccount::remove_password
-    UserAccount usr = get_user_account(username, user_id, number_of_passwords, &test_passwords);
+    UserAccount  usr = get_user_account(username, user_id, number_of_passwords, &test_passwords);
     usr.remove_password(curr_pass_id);
     assert(usr.contains_password(curr_pass_id) == false);
     for(int i = 1; i < number_of_passwords; ++i){
         assert(usr.contains_password(i) == true);
     }
+    std::cout << "Test Three Pass" << std::endl;
 }
 void test_four(){
     // TEST UserAccount::modify_password
@@ -49,6 +50,7 @@ void test_four(){
     assert(usr_data_copy.contains(curr_pass_id) == true);
     std::string new_desc = usr_data_copy.extract(curr_pass_id).mapped().description;
     assert(new_desc == "new description");
+    std::cout << "Test Four Pass" << std::endl;
 }
 void test_five(){
     // TEST UserAccount::modify_password
@@ -58,7 +60,9 @@ void test_five(){
     assert(usr_data_copy.contains(curr_pass_id) == true);
     std::string new_password = usr_data_copy.extract(curr_pass_id).mapped().encryped_password;
     assert(new_password == "new password");
+    std::cout << "Test Five Pass" << std::endl;
 }
+
 
 int main(int argc, char *argv[]){
     test_passwords.reserve(number_of_passwords);
