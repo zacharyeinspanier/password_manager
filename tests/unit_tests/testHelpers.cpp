@@ -1,5 +1,5 @@
-#include "../app/structs/password.cpp"
-#include "../app/objects/userAccount.cpp"
+#include "../../app/structs/password.cpp"
+#include "../../app/objects/userAccount.cpp"
 
 void generate_passwords(int number, std::vector<password> * test_passwords){
 

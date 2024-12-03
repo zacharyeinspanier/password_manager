@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 #include "./testHelpers.cpp"
-#include "../app/structs/operations.hpp"
+#include "../../app/structs/operations.hpp"
 
 int user_id = 1;
 int number_of_passwords = 10;
