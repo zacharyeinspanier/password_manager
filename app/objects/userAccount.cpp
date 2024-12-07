@@ -10,14 +10,23 @@ UserAccount::UserAccount(const std::string username, const int user_id, const st
     this->account_username = username;
     this->user_id = user_id;
 
-
     for(int i = 0; i < user_data->size(); ++i){
-        // &(*user_data)[i]
-        // first dereference using * to get std::vector<password>
-        // then use [] operator to access the element at i
-        // then use & operator to get the address of that element
         this->add_password(&(*user_data)[i]);
     }
+}
+
+UserAccount* UserAccount::initialize_instance(std::string const username, const int user_id, const std::vector<password> * user_data){
+    if(UserAccount::instance_ptr == nullptr){
+        std::lock_guard<std::mutex> lock(UserAccount::user_acc_mutex);
+        UserAccount::instance_ptr = new UserAccount(username, user_id, user_data);
+    }
+
+    return instance_ptr;
+}
+
+UserAccount* UserAccount::get_instance(){
+
+    return instance_ptr;
 }
 
 void UserAccount::add_password(const password * new_password){
@@ -160,3 +169,7 @@ std::unordered_map<int, password> UserAccount::get_data_copy(){
  }
 
 UserAccount::~UserAccount(){}
+
+UserAccount& UserAccount::operator=(const UserAccount &other){
+
+}

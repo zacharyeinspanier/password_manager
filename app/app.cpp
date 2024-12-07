@@ -5,11 +5,11 @@
 #include "./objects/displayContent.cpp"
 
 
-std::mutex user_account_mutex; 
-UserAccount usr_acc;
+DisplayContent* DisplayContent::instance_ptr = nullptr;
+UserAccount * UserAccount::instance_ptr = nullptr;
 
 
 // Initialize all variables
 // start threads
 // Create DisplayContent and return
-DisplayContent launch_app(UserAccount acc, std::condition_variable * data_cv, bool * data_store_event);
+DisplayContent launch_app();
