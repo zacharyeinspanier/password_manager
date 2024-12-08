@@ -14,8 +14,7 @@ void generate_passwords(int number, std::vector<password> * test_passwords){
 } 
 
 
-UserAccount get_user_account(std::string username, int user_id, int number, std::vector<password> * test_passwords){
+UserAccount * get_user_account(std::string username, int user_id, int number, std::vector<password> * test_passwords){
     generate_passwords(number, test_passwords);
-    UserAccount acc = UserAccount(username, user_id, test_passwords);
-    return UserAccount(username, user_id, test_passwords); 
+    return UserAccount::initialize_instance(username, user_id, test_passwords);
 }

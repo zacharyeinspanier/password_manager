@@ -170,6 +170,6 @@ std::unordered_map<int, password> UserAccount::get_data_copy(){
 
 UserAccount::~UserAccount(){}
 
-UserAccount& UserAccount::operator=(const UserAccount &other){
+// UserAccount& UserAccount::operator=(const UserAccount &other){
 
-}
+// }

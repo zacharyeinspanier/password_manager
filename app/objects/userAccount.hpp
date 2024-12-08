@@ -47,7 +47,7 @@ class UserAccount{
         bool contains_password(const int p_id);
 
         std::unordered_map<int, password> get_data_copy();
-        UserAccount& operator=(const UserAccount &other);
+        //UserAccount& operator=(const UserAccount &other);
 };
 
 #endif
