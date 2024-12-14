@@ -1,4 +1,7 @@
 #include "displayContent.hpp"
+#include "../processes/process_data_store.cpp"
+#include "../processes/process_operation_event.cpp"
+#include "../processes/process_search_bar.cpp"
 
 // Constructor
 DisplayContent::DisplayContent(){
@@ -6,9 +9,12 @@ DisplayContent::DisplayContent(){
 
     this->current_operation = nullptr;
     this->operation_event_state = false;
+    this->operation_loop_exit = false;
 
-    this->search_event_state = false;
     this->search_term = nullptr;
+    this->search_event_state = false;
+    this->search_loop_exit = false;
+    
 }
 
 // Singelton get_instance
@@ -27,10 +33,43 @@ DisplayContent* DisplayContent::get_instance(){
 std::vector<password> DisplayContent::get_display_list(){
     std::lock_guard<std::mutex> lock(this->display_passwords_mutex);
     std::vector<password> res;
-    for(int i = 0; i < this->display_passwords.size(); ++i){
-        res.push_back(this->display_passwords[i]);
+    for(std::set<std::shared_ptr<password>>::iterator curr = this->display_passwords.begin(); curr != this->display_passwords.end(); ++curr){
+        password temp = *((*curr).get());
+        res.push_back(temp);
     }
+
     return res;
+}
+
+
+void DisplayContent::start_processes(){
+    std::thread(&DisplayContent::operation_process, this);
+    std::thread(&DisplayContent::search_bar_process, this);
+}
+
+void DisplayContent::stop_processes(){
+
+    // Operation process exit
+    {
+        std::lock_guard<std::mutex> operation_lock(this->operation_mutex);
+        std::lock_guard<std::mutex> operation_exit_lock(this->operation_loop_mutex);
+        this->operation_loop_exit = true;
+        this->operation_event_state = true;
+        operation empty_operation;
+        this->current_operation = &empty_operation;
+    }
+    this->operation_cv.notify_all();
+
+    // Search process exit
+    {
+        std::lock_guard<std::mutex> search_lock(this->search_term_mutex);
+        std::lock_guard<std::mutex> search_exit_lock(this->search_loop_mutex);
+        this->search_loop_exit = true;
+        this->search_event_state = true;
+        std::string exit_serach_term = "EXIT";
+        this->search_term = &exit_serach_term;
+    }
+    this->search_term_cv.notify_all();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

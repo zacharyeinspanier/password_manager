@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include <mutex>
+#include <set>
 #include "../structs/operations.hpp"
 #include "../structs/password.hpp"
 
@@ -37,17 +38,21 @@ class UserAccount{
         
     public:
         
+        // Singleton
         UserAccount(const UserAccount& obj) = delete;
         static UserAccount* initialize_instance(std::string const username, const int user_id, const std::vector<password> * user_data);
         static UserAccount* get_instance();
+
+        // Password Operations
         void add_password(const password * new_password);
         void remove_password(const int p_id);
         void modify_password(const int p_id, const std::string new_value, const modifyType modify_type);
         std::string view_password(const int p_id);
         bool contains_password(const int p_id);
+        void search(std::string search_term, std::set<std::shared_ptr<password>> * search_result);
 
         std::unordered_map<int, password> get_data_copy();
-        //UserAccount& operator=(const UserAccount &other);
+        int get_user_id();
 };
 
 #endif

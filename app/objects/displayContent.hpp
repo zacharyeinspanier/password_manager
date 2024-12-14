@@ -2,8 +2,9 @@
 #define DISPLAYCONTENT
 
 #include <iostream>
-#include <vector>
+#include <set>
 #include <condition_variable>
+#include <thread>
 #include "./userAccount.cpp"
 #include "../structs/operations.hpp"
 #include "../structs/password.cpp"
@@ -20,20 +21,24 @@ class DisplayContent{
         static std::mutex display_content_mutex;
 
         std::mutex display_passwords_mutex;
-        std::vector<password> display_passwords;
+        std::set<std::shared_ptr<password>> display_passwords; 
         std::mutex user_account_mutex; 
-        const UserAccount * usr_acc;
+        UserAccount * usr_acc;
 
         // Operations
         bool operation_event_state;
+        bool operation_loop_exit;
         std::condition_variable operation_cv;
         std::mutex operation_mutex;
+        std::mutex operation_loop_mutex;
         operation * current_operation;
 
         // Search Bar
         bool search_event_state;
+        bool search_loop_exit;
         std::string * search_term;
         std::mutex search_term_mutex;
+        std::mutex search_loop_mutex;
         std::condition_variable search_term_cv;
 
         // Methods
@@ -61,9 +66,11 @@ class DisplayContent{
         DisplayContent(const DisplayContent& obj) = delete;
         static DisplayContent* get_instance();
         void start_processes();
+        void stop_processes();
         std::vector<password> get_display_list();
         void operation_event(operation &new_operation);
         void search_event(std::string &new_search_term); 
+        void periodic_data_store();
 };
 
 #endif
