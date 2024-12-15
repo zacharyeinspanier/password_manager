@@ -6,6 +6,15 @@
 // Constructor
 DisplayContent::DisplayContent(){
     this->usr_acc = UserAccount::get_instance();
+    {
+        // get initial copy of data
+        std::lock_guard<std::mutex> lock_display_passwords(this->display_passwords_mutex);
+        std::lock_guard<std::mutex> lock_user_acc(this->user_account_mutex);
+        for (const auto& item : this->usr_acc->get_data_copy()) {
+            std::shared_ptr<password> curr_pass = std::make_shared<password>(item.second);
+            this->display_passwords.insert(curr_pass);
+        }
+    }
 
     this->current_operation = nullptr;
     this->operation_event_state = false;
@@ -30,6 +39,17 @@ DisplayContent* DisplayContent::get_instance(){
     return instance_ptr;
 }
 
+void DisplayContent::reset_display_list(){
+    std::lock_guard<std::mutex> lock(this->display_passwords_mutex);
+    std::lock_guard<std::mutex> lock_user_acc(this->user_account_mutex);
+    this->display_passwords.erase(this->display_passwords.begin(), this->display_passwords.end());
+    for (const auto& item : this->usr_acc->get_data_copy()) {
+        std::cout << "ID: " << item.first << std::endl;
+        std::shared_ptr<password> curr_pass = std::make_shared<password>(item.second);
+        this->display_passwords.insert(curr_pass);
+    }
+}
+
 std::vector<password> DisplayContent::get_display_list(){
     std::lock_guard<std::mutex> lock(this->display_passwords_mutex);
     std::vector<password> res;
@@ -43,8 +63,8 @@ std::vector<password> DisplayContent::get_display_list(){
 
 
 void DisplayContent::start_processes(){
-    std::thread(&DisplayContent::operation_process, this);
-    std::thread(&DisplayContent::search_bar_process, this);
+    this->opeation_thread = std::thread(&DisplayContent::operation_process, this);
+    this->search_thread = std::thread(&DisplayContent::search_bar_process, this);
 }
 
 void DisplayContent::stop_processes(){
@@ -58,7 +78,8 @@ void DisplayContent::stop_processes(){
         operation empty_operation;
         this->current_operation = &empty_operation;
     }
-    this->operation_cv.notify_all();
+    this->operation_cv.notify_all(); // notify wakes thread -> then exit
+   //this->opeation_thread.join(); // call join to wait for exit of thread
 
     // Search process exit
     {
@@ -69,7 +90,9 @@ void DisplayContent::stop_processes(){
         std::string exit_serach_term = "EXIT";
         this->search_term = &exit_serach_term;
     }
-    this->search_term_cv.notify_all();
+    this->search_term_cv.notify_all(); // notify wakes thread -> then exit
+   // this->search_thread.join(); // call join to wait for exit of thread
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

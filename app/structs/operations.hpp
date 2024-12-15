@@ -1,6 +1,8 @@
 #ifndef OPERATIONS 
 #define OPERATIONS
 
+#include "./password.hpp"
+
 enum operationType{
     ADD,
     MODIFY,

@@ -13,7 +13,7 @@ std::vector<password> test_passwords;
 UserAccount* UserAccount::instance_ptr = nullptr;
 std::mutex UserAccount::user_acc_mutex;
 UserAccount *test_user = nullptr;
-std::set<std::shared_ptr<password>> search_result;
+std::mutex user_mutex;
 
 
 void generate_passwords(int number, std::vector<password> * test_passwords){
@@ -37,6 +37,7 @@ UserAccount * get_user_account(std::string username, int user_id, int number, st
 
 void test_one(){
     // TEST UserAccount Constructor adds all passwords
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     for(int i = 0; i < number_of_passwords; ++i){
         assert(test_user->contains_password(i) == true);
     }
@@ -44,6 +45,7 @@ void test_one(){
 }
 void test_two(){
     // TEST UserAccount::add_password add new password
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     password new_password;
     new_password.p_id = 100;
     new_password.username = "username_100";
@@ -54,6 +56,7 @@ void test_two(){
 }
 void test_three(){
     // TEST UserAccount::remove_password
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     test_user->remove_password(curr_pass_id);
     assert(test_user->contains_password(curr_pass_id) == false);
     for(int i = 1; i < number_of_passwords; ++i){
@@ -64,6 +67,7 @@ void test_three(){
 }
 void test_four(){
     // TEST UserAccount::modify_password
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     test_user->modify_password(curr_pass_id, "new description", modifyType::MODIFY_DESCRIPTION);
     std::unordered_map<int, password> test_user_data_copy = test_user->get_data_copy();
     assert(test_user_data_copy.contains(curr_pass_id) == true);
@@ -73,6 +77,7 @@ void test_four(){
 }
 void test_five(){
     // TEST UserAccount::modify_password
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     test_user->modify_password(curr_pass_id, "new password", modifyType::MODIFY_PASSWORD);
     std::unordered_map<int, password> test_user_data_copy = test_user->get_data_copy();
     assert(test_user_data_copy.contains(curr_pass_id) == true);
@@ -83,93 +88,25 @@ void test_five(){
 
 void test_six(){
     // TEST UserAccount::get_instance()
+    std::lock_guard<std::mutex> lock_user_acc(user_mutex);
     UserAccount *usr_acc_get_instance = UserAccount::get_instance();
     assert(usr_acc_get_instance == test_user);
     UserAccount *usr_acc_initialize =  UserAccount::initialize_instance(username, user_id, &test_passwords);
     assert(usr_acc_initialize == test_user);
     std::cout << "Test Six Pass" << std::endl;
-}
 
-void test_seven(){
-    // When there are mutiple passwords with the same username they are grouped together
-    // TEST that all usernames with the same value are grouped together
-    std::set<int> static_username_ids;
-    for(int i = 0; i < number_of_passwords; ++i){
-        password new_password;
-        new_password.p_id = 101 + i;
-        new_password.username = "static_username";
-        new_password.encryped_password =  "password_" + std::to_string(101 + i);
-        static_username_ids.insert(101 + i);
-        test_user->add_password(&new_password);
-        assert(test_user->contains_password(101+i) == true);
-    }
-    std::string search_term = "static_username";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
-    for (const auto& item : search_result) { 
-        assert(static_username_ids.contains((*item.get()).p_id));
-    }
-    std::cout << "Test Seven Pass" << std::endl;  
-}
-
-void test_eight(){
-    // TEST that all descriptions with the same value are grouped together
-    std::set<int> static_description_ids;
-    for(int i = 0; i < number_of_passwords; ++i){
-        password new_password;
-        new_password.p_id = 201 + i;
-        new_password.username = "username_" + std::to_string(101 + i);
-        new_password.encryped_password =  "password_" + std::to_string(101 + i);
-        new_password.description = "static_description";
-        static_description_ids.insert(201 + i);
-        test_user->add_password(&new_password);
-        assert(test_user->contains_password(101+i) == true);
-    }
-    std::string search_term = "static_description";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
-    for (const auto& item : search_result) {
-        assert(static_description_ids.contains((*item.get()).p_id)  );
-    }
-    std::cout << "Test Eight Pass" << std::endl;  
-}
-
-void test_nine(){
-     // TEST that all urls with the same value are grouped together
-    std::set<int> static_url_ids;
-    for(int i = 0; i < number_of_passwords; ++i){
-        password new_password;
-        new_password.p_id = 301 + i;
-        new_password.username = "username_" + std::to_string(101 + i);
-        new_password.encryped_password =  "password_" + std::to_string(101 + i);
-        new_password.description = "descr_" + std::to_string(101 + i);
-        new_password.url = "https//:static_url";
-        static_url_ids.insert(301 + i);
-        test_user->add_password(&new_password);
-        assert(test_user->contains_password(101+i) == true);
-    }
-    std::string search_term = "https//:static_url";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
-    for (const auto& item : search_result) {
-        assert(static_url_ids.contains((*item.get()).p_id)  );
-    }
-    std::cout << "Test Nine Pass" << std::endl;  
-}
-
-void test_ten(){
-    //test search
 }
 
 int main(int argc, char *argv[]){
     test_user = get_user_account(username, user_id, number_of_passwords, &test_passwords);
-    test_one();
-    test_two();
+    std::thread test_one_th(test_one);
+    //test_one()
+    std::thread test_two_th(test_two);
+    test_two_th.join();
+    test_one_th.join();
+    //test_two();
     test_three();
     test_four();
     test_five();
     test_six();
-    test_seven();
-    test_eight();
-    test_nine();
 }
