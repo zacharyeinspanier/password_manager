@@ -19,6 +19,7 @@ std::string username = "test_user";
 std::vector<password> test_passwords;
 DisplayContent *test_content;
 UserAccount *test_user;
+std::set<std::shared_ptr<password>> search_result;
 
 
 void generate_passwords(int number, std::vector<password> * test_passwords){
@@ -79,7 +80,9 @@ void test_one(){
 
     
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    test_content->operation_event(add_operation_one);
+    //test_content->operation_event(add_operation_one);
+    //test_user->search("description_1000", &search_result);
+    std::cout << "length of set : " << search_result.size() << std::endl;
 
     // test_content->reset_display_list();
     // auto data = test_content->get_display_list();
