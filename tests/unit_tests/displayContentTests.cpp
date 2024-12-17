@@ -77,8 +77,9 @@ void test_one(){
     add_operation_one.operation_type = operationType::ADD;
     add_operation_one.new_password = new_password_one;
 
-    //test_content->operation_event(add_operation_one);
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    test_content->operation_event(add_operation_one);
 
     // test_content->reset_display_list();
     // auto data = test_content->get_display_list();
