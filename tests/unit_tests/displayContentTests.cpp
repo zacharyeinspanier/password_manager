@@ -2,6 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include "../../app/structs/password.cpp"
+#include "../../app/structs/operations.cpp"
 #include "../../app/objects/userAccount.cpp"
 #include "../../app/objects/displayContent.cpp"
 
