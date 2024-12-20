@@ -1,4 +1,4 @@
-#ifndef PASSWORD 
+#ifndef PASSWORD
 #define PASSWORD
 
 #include <iostream>
@@ -6,7 +6,8 @@
 #include <mutex>
 #include <ctime>
 
-struct password{
+struct password
+{
     std::string username;
     std::string encryped_password;
     std::string description;
@@ -18,12 +19,12 @@ struct password{
 
     password();
     password(std::string username, std::string password, std::string description, std::string url, int p_id);
-    password(const password& other); 
+    password(const password &other);
     ~password();
 
     std::string encrypt_data(std::string password);
     std::string decrypt_data();
-    password& operator=(password const& other);
+    password &operator=(password const &other);
 };
 
 #endif

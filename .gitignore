@@ -74,3 +74,5 @@ ui/*.exe
 
 # Env vars file
 .env
+
+tests/output/*

@@ -57,6 +57,10 @@ void test_one()
         new_operation.new_password = new_password;
         test_content->operation_event(new_operation);
     }
+
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     test_content->reset_display_list();
     auto user_data = test_content->get_display_list();
     for (const auto &item : user_data)
@@ -67,6 +71,8 @@ void test_one()
         }
     }
     assert(new_ids.empty());
+
+    std::cout << "Test One Pass" << std::endl;
 }
 
 void test_two()
@@ -86,6 +92,10 @@ void test_two()
         remove_operation.new_password = remove_password;
         test_content->operation_event(remove_operation);
     }
+
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     test_content->reset_display_list();
     auto user_data = test_content->get_display_list();
     // None of the p_id's in remove_ids will be in user data
@@ -93,13 +103,14 @@ void test_two()
     {
         assert(remove_ids.contains(item.p_id) == false);
     }
+    std::cout << "Test Two Pass" << std::endl;
 }
 void test_three()
 {
     // TEST THREE: Modify Desc
     test_content->reset_display_list();
-    auto user_data = test_content->get_display_list();
-    for (const auto &item : user_data)
+    auto user_data_before = test_content->get_display_list();
+    for (const auto &item : user_data_before)
     {
         password modify_password = item;
         operation modify_operation;
@@ -111,20 +122,25 @@ void test_three()
         test_content->operation_event(modify_operation);
     }
 
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     test_content->reset_display_list();
-    auto user_data = test_content->get_display_list();
-    for (const auto &item : user_data)
+    auto user_data_after = test_content->get_display_list();
+    for (const auto &item : user_data_after)
     {
         std::string desc_assert = "new_descrioption_" + std::to_string(item.p_id);
         assert(item.description == desc_assert);
     }
+
+    std::cout << "Test Three Pass" << std::endl;
 }
 void test_four()
 {
     // TEST FOUR: Modify Pass
     test_content->reset_display_list();
-    auto user_data = test_content->get_display_list();
-    for (const auto &item : user_data)
+    auto user_data_before = test_content->get_display_list();
+    for (const auto &item : user_data_before)
     {
         password modify_password = item;
         operation modify_operation;
@@ -136,13 +152,18 @@ void test_four()
         test_content->operation_event(modify_operation);
     }
 
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     test_content->reset_display_list();
-    auto user_data = test_content->get_display_list();
-    for (const auto &item : user_data)
+    auto user_data_after = test_content->get_display_list();
+    for (const auto &item : user_data_after)
     {
         std::string pass_assert = "new_password_" + std::to_string(item.p_id);
         assert(item.encryped_password == pass_assert);
     }
+
+    std::cout << "Test Four Pass" << std::endl;
 }
 
 int main(int argc, char *argv[])
