@@ -166,6 +166,86 @@ void test_four()
     std::cout << "Test Four Pass" << std::endl;
 }
 
+void test_five()
+{
+    // TEST FIVE: search bar sets display_passwords
+    std::set<int> passwords_same_url;
+    std::string test_url = "https://testaddress.io";
+    for (int i = 0; i < number_of_passwords; ++i)
+    {
+        password add_password;
+        operation add_operation;
+        add_password.p_id = 501 + i;
+        add_password.username = "username_" + std::to_string(501 + i);
+        add_password.encryped_password = "password_" + std::to_string(501 + i);
+        add_password.url = test_url;
+        passwords_same_url.insert(501 + i);
+        add_operation.modify_type = modifyType::MODIFY_NONE;
+        add_operation.operation_type = operationType::ADD;
+        add_operation.new_password = add_password;
+        test_content->operation_event(add_operation);
+    }
+
+    test_content->search_event(test_url);
+
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    auto user_data = test_content->get_display_list();
+
+    for (const auto &item : user_data)
+    {
+        assert(passwords_same_url.contains(item.p_id));
+        passwords_same_url.erase(item.p_id);
+    }
+
+    assert(passwords_same_url.empty());
+
+    std::cout << "Test Five Pass" << std::endl;
+}
+
+void test_six()
+{
+
+    // TEST SIX: preivous results are erased when repeatly running search.
+
+    // test five searched for URL and resulted in number_of_passwords
+    auto user_data_before = test_content->get_display_list();
+    assert(user_data_before.size() == number_of_passwords);
+    std::string test_desc = "this test is to test resetting the display_passwords member";
+    password add_password;
+    operation add_operation;
+    add_password.p_id = 6001;
+    add_password.username = "username_" + std::to_string(6001);
+    add_password.encryped_password = "password_" + std::to_string(6001);
+    add_password.description = test_desc;
+    add_operation.modify_type = modifyType::MODIFY_NONE;
+    add_operation.operation_type = operationType::ADD;
+    add_operation.new_password = add_password;
+    test_content->operation_event(add_operation);
+
+    test_content->search_event(test_desc);
+
+    // Sleep to allow operation queue to empty
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    auto user_data_after = test_content->get_display_list();
+    assert(user_data_after.size() == 1);
+
+    std::cout << "Test Six Pass" << std::endl;
+}
+
+void test_seven()
+{
+
+    auto user_data_before = test_content->get_display_list();
+    assert(user_data_before.size() == 1);
+    test_content->reset_display_list();
+    auto user_data_after = test_content->get_display_list();
+    assert(user_data_after.size() > 1);
+
+    std::cout << "Test Seven Pass" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     get_user_account(username, user_id, number_of_passwords, &test_passwords);
@@ -175,6 +255,9 @@ int main(int argc, char *argv[])
     test_two();
     test_three();
     test_four();
+    test_five();
+    test_six();
+    test_seven();
     test_content->stop_processes();
     test_content->reset_display_list();
 }

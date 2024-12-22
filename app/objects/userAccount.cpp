@@ -215,9 +215,7 @@ int UserAccount::get_user_id()
 
 void UserAccount::search(std::string search_term, std::set<std::shared_ptr<password>> *search_result)
 {
-    std::cout << "IN search" << std::endl;
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    std::cout << "sksks" << std::endl;
     if (auto search = this->url_map.find(search_term); search != this->url_map.end())
     {
         std::vector<std::shared_ptr<password>> url_search = (*search).second;
@@ -227,7 +225,6 @@ void UserAccount::search(std::string search_term, std::set<std::shared_ptr<passw
             search_result->insert(password_copy);
         }
     }
-    std::cout << "ONE" << std::endl;
     if (auto search = this->username_map.find(search_term); search != this->username_map.end())
     {
         std::vector<std::shared_ptr<password>> username_search = (*search).second;
@@ -237,16 +234,13 @@ void UserAccount::search(std::string search_term, std::set<std::shared_ptr<passw
             search_result->insert(password_copy);
         }
     }
-    std::cout << "TWO" << std::endl;
     if (auto search = this->description_map.find(search_term); search != this->description_map.end())
     {
         std::vector<std::shared_ptr<password>> descrioption_search = (*search).second;
-        std::cout << "found" << std::endl;
         for (int i = 0; i < descrioption_search.size(); ++i)
         {
             std::shared_ptr<password> password_copy(descrioption_search[i]);
             search_result->insert(password_copy);
         }
     }
-    std::cout << "END search" << std::endl;
 }

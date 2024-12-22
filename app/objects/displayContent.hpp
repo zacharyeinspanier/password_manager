@@ -53,7 +53,7 @@ private:
     // The thread must lock the mutex user_account_mutex in order to mutate UserAccount
     //
     // Look at: operation struct in dataTypes.cpp
-    // void operation_process();
+    void operation_process();
 
     // This thread will process searches and populate the vector search_results
     //
@@ -62,6 +62,8 @@ private:
     //
     // The thread must lock the mutex user_account_mutex in order to view UserAccount data
     void search_bar_process();
+
+    void periodic_data_store();
 
 public:
     // Delete the copy constructor
@@ -73,8 +75,7 @@ public:
     std::vector<password> get_display_list();
     void operation_event(operation &new_operation);
     void search_event(std::string &new_search_term);
-    void periodic_data_store();
-    void operation_process();
+
 };
 
 #endif
