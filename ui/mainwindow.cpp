@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "createaccount.h"
-#include "useraccount.h"
 #include <QMessageBox>
 #include <cstdlib>
 #include <QSqlQuery>
@@ -15,7 +13,6 @@ void display_message(QString msg, QMessageBox::Icon icon){
     errMsgBox.setStandardButtons(QMessageBox::Ok);
     errMsgBox.exec();
 }
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -147,9 +144,4 @@ void MainWindow::on_login_btn_clicked()
 
     db_con.close();
 
-
-    //3: actually login
-
 }
-
-

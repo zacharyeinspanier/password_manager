@@ -20,6 +20,13 @@ void DisplayContent::periodic_data_store()
         // UserAccount::user_id()
         user_account_lock.unlock();
 
+        // 1: get a copy of user data
+        // 2: open a connection the the database
+        // 3: update the existing
+        // 4: INSERT WHERE user_id and password id
+
+        
+
         // UPDATE data in sql DB
     }
 }

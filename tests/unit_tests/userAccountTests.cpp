@@ -3,6 +3,7 @@
 #include <iostream>
 #include "../../app/objects/userAccount.cpp"
 #include "../../app/structs/password.cpp"
+#include "../../app/structs/operations.cpp"
 
 int user_id = 1;
 int number_of_passwords = 10;

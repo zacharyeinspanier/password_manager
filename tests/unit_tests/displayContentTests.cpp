@@ -259,5 +259,4 @@ int main(int argc, char *argv[])
     test_six();
     test_seven();
     test_content->stop_processes();
-    test_content->reset_display_list();
 }

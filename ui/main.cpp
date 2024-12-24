@@ -4,6 +4,7 @@
 #include <QLocale>
 #include <QTranslator>
 #include <QMessageBox>
+#include "../app/app.cpp"
 
 QString env_db_path = NULL;
 // User account
@@ -22,17 +23,6 @@ int main(int argc, char *argv[])
     }
 
 
-    // Main() plan
-    //1: load database
-    //2: user authentication
-    //3: on success of user authentication load user passwords
-    //4: create useraccount
-    //5: call useraccount::data
-    //6: call app launch app
-    //7: quit mainwindow
-    //8: create window; account window
-    //9: display account window. 
-
     // Load Enviroment Variable
     MainWindow w;
     char* env_db_path_raw = std::getenv("DB_PATH");
@@ -45,10 +35,16 @@ int main(int argc, char *argv[])
         errMsgBox.exec();
         QApplication::quit();
         return 1;
-    }else{
-        env_db_path = QString::fromStdString(std::string(env_db_path_raw));
-        w.SetDBPath(&env_db_path);
-        w.show();
-        return a.exec();
     }
+    env_db_path = QString::fromStdString(std::string(env_db_path_raw));
+    w.SetDBPath(&env_db_path);
+    w.show();
+    return a.exec();
+
+    // when the application window exits we will need to do the following
+    // 1: retrieve the user_id
+    // 2: load user data from sql data base
+    // 3: call start app
+    // 4: create a new application
+    // 5: show and start the application.
 }
