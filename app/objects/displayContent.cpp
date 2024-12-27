@@ -4,7 +4,7 @@
 #include "../processes/process_search_bar.cpp"
 
 // Constructor
-DisplayContent::DisplayContent()
+DisplayContent::DisplayContent(std::string * db_path)
 {
     this->usr_acc = UserAccount::get_instance();
     {
@@ -18,6 +18,12 @@ DisplayContent::DisplayContent()
         }
     }
 
+    this->db_path = *db_path;
+    this->data_store_exit = false;
+
+    this->search_thread_done = false;
+    this->operation_thread_done = false;
+
     this->operation_event_state = false;
     this->operation_loop_exit = false;
 
@@ -30,12 +36,12 @@ DisplayContent::DisplayContent()
 // Checks if the instance has been initialized
 // if so, return the instance pointer
 // otherwise create an instance of the object with new
-DisplayContent *DisplayContent::get_instance()
+DisplayContent *DisplayContent::get_instance(std::string * db_path)
 {
     if (DisplayContent::instance_ptr == nullptr)
     {
         std::lock_guard<std::mutex> lock(DisplayContent::display_content_mutex);
-        DisplayContent::instance_ptr = new DisplayContent();
+        DisplayContent::instance_ptr = new DisplayContent(db_path);
     }
 
     return instance_ptr;
@@ -75,17 +81,6 @@ void DisplayContent::start_processes()
 void DisplayContent::stop_processes()
 {
 
-    // Operation process exit
-    {
-        std::lock_guard<std::mutex> operation_lock(this->operation_mutex);
-        std::lock_guard<std::mutex> operation_exit_lock(this->operation_loop_mutex);
-        this->operation_loop_exit = true;
-        this->operation_event_state = true;
-        operation empty_operation;
-        this->operation_queue.push(empty_operation);
-    }
-    this->operation_cv.notify_all(); // notify wakes thread -> then exit
-                                     // this->opeation_thread.join(); // call join to wait for exit of thread
 
     // Search process exit
     {
@@ -97,7 +92,32 @@ void DisplayContent::stop_processes()
         this->search_term = &exit_serach_term;
     }
     this->search_term_cv.notify_all(); // notify wakes thread -> then exit
-                                       // this->search_thread.join(); // call join to wait for exit of thread
+
+    // Operation process exit
+    {
+        std::lock_guard<std::mutex> operation_lock(this->operation_mutex);
+        std::lock_guard<std::mutex> operation_exit_lock(this->operation_loop_mutex);
+        this->operation_loop_exit = true;
+        this->operation_event_state = true;
+        operation empty_operation;
+        this->operation_queue.push(empty_operation);
+    }
+    this->operation_cv.notify_all(); // notify wakes thread -> then exit
+    
+    // Data Store EXIT
+    {
+        // Both Search and Operations threads must finish before data store can exit
+        // Allowing for user data to settle before complete exit
+        std::unique_lock<std::mutex> exit_threads_lock(this->exit_threads_mutex, std::defer_lock);
+        exit_threads_lock.lock();
+        while(this->search_thread_done == false || this->operation_thread_done == false){
+            this->exit_threads_cv.wait(exit_threads_lock);
+        }
+        exit_threads_lock.unlock();
+
+        std::lock_guard<std::mutex> data_store_exit_lock(this->data_store_loop_mutex);
+        this->data_store_exit = true;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

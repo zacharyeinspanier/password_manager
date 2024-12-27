@@ -12,8 +12,8 @@ struct password
     std::string encryped_password;
     std::string description;
     std::string url;
-    time_t modify_date;
-    time_t date_created;
+    long long modify_date;
+    long long date_created;
     int p_id;
     mutable std::mutex password_mutex;
 

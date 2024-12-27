@@ -7,23 +7,27 @@ UserAccount::UserAccount(std::string username, int user_id)
     this->user_id = user_id;
 }
 
-UserAccount::UserAccount(const std::string username, const int user_id, const std::vector<password> *user_data)
+UserAccount::UserAccount(const std::string username, const int user_id, std::string *db_path)
 {
     this->account_username = username;
     this->user_id = user_id;
+    this->db_path = *db_path;
+    this->current_password_id = 0;
 
-    for (int i = 0; i < user_data->size(); ++i)
+    for (int i = 0; i < UserAccount::initial_user_data.size(); ++i)
     {
-        this->add_password(&(*user_data)[i]);
+        this->current_password_id = std::max(this->current_password_id, UserAccount::initial_user_data[i].p_id);
+        this->add_password(&UserAccount::initial_user_data[i]);
     }
 }
 
-UserAccount *UserAccount::initialize_instance(std::string const username, const int user_id, const std::vector<password> *user_data)
+UserAccount *UserAccount::initialize_instance(std::string const username, const int user_id, std::string *db_path)
 {
     if (UserAccount::instance_ptr == nullptr)
     {
         std::lock_guard<std::mutex> lock(UserAccount::user_acc_mutex);
-        UserAccount::instance_ptr = new UserAccount(username, user_id, user_data);
+        UserAccount::get_user_data(user_id, *db_path);
+        UserAccount::instance_ptr = new UserAccount(username, user_id, db_path);
     }
 
     return instance_ptr;
@@ -34,12 +38,82 @@ UserAccount *UserAccount::get_instance()
     return instance_ptr;
 }
 
+int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
+{
+
+    for (int i = 0; i < argc; ++i)
+    {
+        password curr_password;
+        std::string column_name(azColName[i]);
+        if (column_name == "USERNAME")
+            curr_password.username = argv[i];
+        if (column_name == "PASSWORD")
+            curr_password.encryped_password = argv[i];
+        if (column_name == "DESCRIPTION")
+            curr_password.description = argv[i];
+        if (column_name == "URL")
+            curr_password.url = argv[i];
+        if (column_name == "DATE_CREATED")
+        {
+            std::string date_created_string = argv[i];
+            curr_password.date_created = std::stoll(date_created_string);
+        }
+
+        if (column_name == "DATE_MODIFIED")
+        {
+            std::string date_modified_string = argv[i];
+            curr_password.modify_date = std::stoll(date_modified_string);
+
+        }
+        if (column_name == "PASSWORD_ID")
+        {
+            std::string p_id_string = argv[i];
+            curr_password.p_id = stoi(p_id_string);
+        }
+
+        UserAccount::initial_user_data.push_back(curr_password);
+    }
+    return 0;
+}
+
+void UserAccount::get_user_data(int user_id, std::string db_path)
+{
+
+    sqlite3 *db;
+    int rc;
+    const char *path = &db_path[0];
+    rc = sqlite3_open(path, &db);
+
+    if (rc != SQLITE_OK)
+    {
+        // TODO: error handeling
+        std::cerr << "Error Insert get user data" << std::endl;
+    }
+    else
+    {
+        std::string sql = "SELECT * FROM USER_DATA WHERE USERID == " + std::to_string(user_id) + ";";
+        std::string data = "CALLBACK FUNCTION";
+        int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback, (void *)data.c_str(), NULL);
+
+        if (rc_exec != SQLITE_OK)
+        {
+            std::cerr << "Error Select" << std::endl;
+        }
+    }
+}
+
 void UserAccount::add_password(const password *new_password)
 {
 
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     // Copy password
     password cpy_new_password = *new_password;
+
+    // Set password id
+    if(cpy_new_password.p_id == -1){
+        cpy_new_password.p_id = this->current_password_id + 1;
+        this->current_password_id += 1;
+    }
 
     // shared pointers
     std::shared_ptr<password> pass_id_map = std::make_shared<password>(cpy_new_password);

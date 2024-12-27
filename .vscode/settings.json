@@ -57,6 +57,7 @@
         "algorithm": "cpp",
         "__tree": "cpp",
         "set": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "chrono": "cpp"
     }
 }

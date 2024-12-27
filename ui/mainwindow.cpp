@@ -54,7 +54,7 @@ void MainWindow::on_create_acc_btn_clicked()
 
     //Check if user account exists
     QSqlQuery userExistsQuery(db_con);
-    userExistsQuery.prepare("SELECT * FROM accounts WHERE USERNAME = :username");
+    userExistsQuery.prepare("SELECT * FROM ACCOUNTS WHERE USERNAME = :username");
     userExistsQuery.bindValue(":username", username);
     if(userExistsQuery.exec()){
         user_exists = userExistsQuery.next() ? true : false;
@@ -70,7 +70,7 @@ void MainWindow::on_create_acc_btn_clicked()
     if(!user_exists){
         //Insert user into accounts
         QSqlQuery insertUserQuery(db_con);
-        insertUserQuery.prepare("INSERT INTO accounts (USERNAME, PASSWORD) VALUES (:username, :password)");
+        insertUserQuery.prepare("INSERT INTO ACCOUNTS (USERNAME, PASSWORD) VALUES (:username, :password)");
         insertUserQuery.bindValue(":username", username);
         insertUserQuery.bindValue(":password", password);
 
@@ -111,7 +111,7 @@ void MainWindow::on_login_btn_clicked()
     QString password = this->ui->password_input->text();
 
     QSqlQuery userAuthenticateQuery(db_con);
-    userAuthenticateQuery.prepare("SELECT * FROM accounts WHERE USERNAME = :username AND PASSWORD = :password");
+    userAuthenticateQuery.prepare("SELECT * FROM ACCOUNTS WHERE USERNAME = :username AND PASSWORD = :password");
     userAuthenticateQuery.bindValue(":username", username);
     userAuthenticateQuery.bindValue(":password", password);
 

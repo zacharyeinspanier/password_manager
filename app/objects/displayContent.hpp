@@ -6,6 +6,8 @@
 #include <condition_variable>
 #include <thread>
 #include <queue>
+#include <vector>
+#include <sqlite3.h>
 #include "./userAccount.hpp"
 #include "../structs/operations.hpp"
 #include "../structs/password.hpp"
@@ -32,7 +34,7 @@ private:
     std::condition_variable operation_cv;
     std::mutex operation_mutex;
     std::mutex operation_loop_mutex;
-    std::queue<operation> operation_queue; // TODO: make this a queue
+    std::queue<operation> operation_queue;
     std::thread opeation_thread;
 
     // Search Bar
@@ -44,8 +46,21 @@ private:
     std::condition_variable search_term_cv;
     std::thread search_thread;
 
+    // Data Store
+    std::string db_path;
+    std::mutex db_path_mutex;
+    std::thread data_store_thread;
+    std::mutex data_store_loop_mutex;
+    bool data_store_exit;
+
+    // EXIT Threads
+    bool search_thread_done;
+    bool operation_thread_done;
+    std::mutex exit_threads_mutex;
+    std::condition_variable exit_threads_cv;
+
     // Methods
-    DisplayContent();
+    DisplayContent(std::string * db_path);
 
     // This thread will process operations such as add, remove, modify, and view
     //
@@ -68,13 +83,14 @@ private:
 public:
     // Delete the copy constructor
     DisplayContent(const DisplayContent &obj) = delete;
-    static DisplayContent *get_instance();
+    static DisplayContent *get_instance(std::string * db_path);
     void start_processes();
     void stop_processes(); // TODO calling this fuction could be apart of the deconstructor
     void reset_display_list();
     std::vector<password> get_display_list();
     void operation_event(operation &new_operation);
     void search_event(std::string &new_search_term);
+
 
 };
 

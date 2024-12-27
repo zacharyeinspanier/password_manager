@@ -5,6 +5,7 @@ void DisplayContent::operation_process()
     std::unique_lock<std::mutex> operation_event_lock(this->operation_mutex, std::defer_lock);
     std::unique_lock<std::mutex> operation_exit_lock(this->operation_loop_mutex, std::defer_lock);
     std::unique_lock<std::mutex> user_account_lock(this->user_account_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> exit_threads_lock(this->exit_threads_mutex, std::defer_lock);
 
     while (true)
     {
@@ -17,15 +18,7 @@ void DisplayContent::operation_process()
         operation current_operation = this->operation_queue.front();
         this->operation_queue.pop();
 
-        // EXIT CONDITION
-        operation_exit_lock.lock();
-        if (this->operation_loop_exit)
-        {
-            operation_exit_lock.unlock();
-            break;
-        }
-        operation_exit_lock.unlock();
-
+    
         user_account_lock.lock();
         // !!CRITICA CODE!! //
         switch (current_operation.operation_type)
@@ -54,9 +47,30 @@ void DisplayContent::operation_process()
         case operationType::VIEW:
             this->usr_acc->view_password(current_operation.new_password.p_id);
             break;
+        default:
+            break;
         }
 
         user_account_lock.unlock();
+
+        // EXIT CONDITION
+        // only exit if the queue is empty
+        operation_exit_lock.lock();
+        if (this->operation_loop_exit && this->operation_queue.empty())
+        {
+            // Search Term must finish first
+            exit_threads_lock.lock();
+            this->operation_thread_done = true;
+            while(this->search_thread_done == false){
+                this->exit_threads_cv.wait(exit_threads_lock);
+            }
+            exit_threads_lock.unlock();
+            this->exit_threads_cv.notify_all();
+
+            operation_exit_lock.unlock();
+            break;
+        }
+        operation_exit_lock.unlock();
 
         if(this->operation_queue.empty()){
             this->operation_event_state = false;
