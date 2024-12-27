@@ -13,7 +13,6 @@ UserAccount::UserAccount(const std::string username, const int user_id, std::str
     this->user_id = user_id;
     this->db_path = *db_path;
     this->current_password_id = 0;
-
     for (int i = 0; i < UserAccount::initial_user_data.size(); ++i)
     {
         this->current_password_id = std::max(this->current_password_id, UserAccount::initial_user_data[i].p_id);
@@ -40,10 +39,11 @@ UserAccount *UserAccount::get_instance()
 
 int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
 {
-
+    // This callback is invoked each time the SELECT query finds a matching row.
+    // This callback is used to store user data as a password, and insert the password into initial_user_data
+    password curr_password;
     for (int i = 0; i < argc; ++i)
     {
-        password curr_password;
         std::string column_name(azColName[i]);
         if (column_name == "USERNAME")
             curr_password.username = argv[i];
@@ -62,17 +62,15 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
         if (column_name == "DATE_MODIFIED")
         {
             std::string date_modified_string = argv[i];
-            curr_password.modify_date = std::stoll(date_modified_string);
-
+            curr_password.date_modified = std::stoll(date_modified_string);
         }
         if (column_name == "PASSWORD_ID")
         {
             std::string p_id_string = argv[i];
             curr_password.p_id = stoi(p_id_string);
         }
-
-        UserAccount::initial_user_data.push_back(curr_password);
     }
+    UserAccount::initial_user_data.push_back(curr_password);
     return 0;
 }
 
@@ -91,7 +89,7 @@ void UserAccount::get_user_data(int user_id, std::string db_path)
     }
     else
     {
-        std::string sql = "SELECT * FROM USER_DATA WHERE USERID == " + std::to_string(user_id) + ";";
+        std::string sql = "SELECT * FROM USER_DATA WHERE USERID ==" + std::to_string(user_id) + ";";
         std::string data = "CALLBACK FUNCTION";
         int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback, (void *)data.c_str(), NULL);
 
@@ -110,7 +108,8 @@ void UserAccount::add_password(const password *new_password)
     password cpy_new_password = *new_password;
 
     // Set password id
-    if(cpy_new_password.p_id == -1){
+    if (cpy_new_password.p_id == -1)
+    {
         cpy_new_password.p_id = this->current_password_id + 1;
         this->current_password_id += 1;
     }
@@ -162,7 +161,6 @@ void UserAccount::add_password(const password *new_password)
     }
     catch (...)
     {
-        std::cout << "could not insert password" << std::endl;
         throw;
     }
 }

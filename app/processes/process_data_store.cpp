@@ -35,24 +35,39 @@ void DisplayContent::periodic_data_store()
 
         sqlite3 *db;
         int rc;
-        const char * path = &db_path_copy[0];
+        const char *path = &db_path_copy[0];
         rc = sqlite3_open(path, &db);
 
-        // We are inserting into the user data base
-        // There are two options
-        // INSET OR REPLACE
-        // 1: the password with p_id alred exists
-        // 2: the password does not exist and needs to be inserted
-            // a: How will I ensure that add_password will assign a unique p_id?
-                // When the data is loaded I could just find the max p_id, then increment by 1
+        for (auto item : user_data_copy)
+        {
+            password curr_password = item.second;
+            char sql_insert[1500];
+            snprintf(
+                sql_insert,
+                sizeof(sql_insert),
+                "INSERT OR REPLACE INTO USER_DATA (USERNAME, PASSWORD, DESCRIPTION, URL, DATE_CREATED, DATE_MODIFIED, PASSWORD_ID, USERID) VALUES('%s', '%s', '%s','%s', %s, %s, %s, %s);",
+                curr_password.username.c_str(),
+                curr_password.encryped_password.c_str(),
+                curr_password.description.c_str(),
+                curr_password.url.c_str(),
+                std::to_string(curr_password.date_created).c_str(),
+                std::to_string(curr_password.date_modified).c_str(),
+                std::to_string(curr_password.p_id).c_str(),
+                std::to_string(user_id).c_str());
 
+            int rc_exec;
+            char *messaggeError;
+            rc_exec = sqlite3_exec(db, sql_insert, NULL, 0, &messaggeError);
+            if (rc_exec != SQLITE_OK)
+            {
+                std::cerr << "Error Insert data store" << std::endl;
+                std::cout << messaggeError << std::endl;
+                sqlite3_free(messaggeError);
+            }
+        }
 
-
-        // 3: update the existing
-        // 4: INSERT WHERE user_id and password id
-
-
-        if(final_store_and_exit){
+        if (final_store_and_exit)
+        {
             // Final data store complete
             break;
         }

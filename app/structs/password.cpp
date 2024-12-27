@@ -16,7 +16,7 @@ password &password::operator=(password const &other)
         encryped_password = other.encryped_password;
         description = other.description;
         url = other.url;
-        modify_date = other.modify_date;
+        date_modified = other.date_modified;
         date_created = other.date_created;
         p_id = other.p_id;
     }
@@ -35,17 +35,17 @@ password::password()
     this->description = "NO_DESCRIPTION_PROVIDED";
     this->url = "NO_URL_PROVIDED";
     this->date_created = time(0);
-    this->modify_date = time(0);
+    this->date_modified = time(0);
 }
-password::password(std::string username, std::string password, std::string description, std::string url, int p_id)
+password::password(std::string username, std::string password, std::string description, std::string url, long long date_created, long long date_modified, int p_id)
 {
     this->username = username;
     this->encryped_password = password;
     this->p_id = p_id;
     this->description = description;
     this->url = url;
-    this->date_created = time(0);
-    this->modify_date = time(0);
+    this->date_created = date_created;
+    this->date_modified = date_modified;
 }
 password::~password() {}
 
@@ -61,7 +61,7 @@ password::password(const password &other)
         encryped_password = other.encryped_password;
         description = other.description;
         url = other.url;
-        modify_date = other.modify_date;
+        date_modified = other.date_modified;
         date_created = other.date_created;
         p_id = other.p_id;
     }

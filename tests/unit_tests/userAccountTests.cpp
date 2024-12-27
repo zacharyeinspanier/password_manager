@@ -11,9 +11,6 @@ std::vector<password> UserAccount::initial_user_data;
 UserAccount *test_user = nullptr;
 std::set<std::shared_ptr<password>> search_result;
 
-
-
-
 void test_one()
 {
     // TEST UserAccount Constructor adds all passwords
@@ -233,9 +230,10 @@ void test_twelve()
 
 int main(int argc, char *argv[])
 {
-    // NOTE: must set enviroment var DB_PATH. 
-    char* env_db_path_raw = std::getenv("DB_PATH");
+    // NOTE: must set enviroment var DB_PATH.
+    char *env_db_path_raw = std::getenv("DB_PATH");
     db_path = std::string(env_db_path_raw);
+    clean_up_database();
     test_user = get_user_account(username, user_id, number_of_passwords);
     test_one();
     test_two();
@@ -249,4 +247,5 @@ int main(int argc, char *argv[])
     test_ten();
     test_twelve();
     test_eleven();
+    clean_up_database();
 }

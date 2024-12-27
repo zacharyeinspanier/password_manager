@@ -8,13 +8,12 @@ UserAccount *UserAccount::instance_ptr = nullptr;
 std::mutex UserAccount::user_acc_mutex;
 std::vector<password> UserAccount::initial_user_data;
 
-
 int number_of_passwords = 10;
 int curr_pass_id = 0;
 std::string username = "test_user";
-std::vector<password> test_passwords;
+std::set<int> passwords_in_db_sql_query;
+std::set<int> passwords_in_db;
 DisplayContent *test_content;
-
 
 void test_one()
 {
@@ -156,7 +155,11 @@ void test_five()
         add_password.username = "username_" + std::to_string(501 + i);
         add_password.encryped_password = "password_" + std::to_string(501 + i);
         add_password.url = test_url;
+        add_password.description = "description temp";
+        add_password.date_created = time(0);
+        add_password.date_modified = time(0);
         passwords_same_url.insert(501 + i);
+        passwords_in_db.insert(add_password.p_id);
         add_operation.modify_type = modifyType::MODIFY_NONE;
         add_operation.operation_type = operationType::ADD;
         add_operation.new_password = add_password;
@@ -193,6 +196,7 @@ void test_six()
     password add_password;
     operation add_operation;
     add_password.p_id = 6001;
+    passwords_in_db.insert(add_password.p_id);
     add_password.username = "username_" + std::to_string(6001);
     add_password.encryped_password = "password_" + std::to_string(6001);
     add_password.description = test_desc;
@@ -204,7 +208,7 @@ void test_six()
     test_content->search_event(test_desc);
 
     // Sleep to allow operation queue to empty
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     auto user_data_after = test_content->get_display_list();
     assert(user_data_after.size() == 1);
 
@@ -223,11 +227,52 @@ void test_seven()
     std::cout << "Test Seven Pass" << std::endl;
 }
 
+int sql_callback(void *data, int argc, char **argv, char **azColName)
+{
+    // NOTE if the password is changed, this could be an error
+    // PASSWORD_ID == column 6
+    int p_id = std::stoi(argv[6]);
+    passwords_in_db_sql_query.insert(p_id);
+
+    return 0;
+}
+
+void test_eight()
+{
+    sqlite3 *db;
+    int rc;
+    const char *path = &db_path[0];
+    rc = sqlite3_open(path, &db);
+
+    assert(rc == SQLITE_OK);
+
+    std::string sql = "SELECT * FROM USER_DATA WHERE USERID='" + std::to_string(user_id) + "';";
+    std::string data = "CALLBACK FUNCTION";
+    char *messaggeError;
+    int rc_exec;
+    rc_exec = sqlite3_exec(db, sql.c_str(), sql_callback, (void *)data.c_str(), &messaggeError);
+    assert(rc_exec == SQLITE_OK);
+
+    for (auto item : passwords_in_db_sql_query)
+    {
+        assert(passwords_in_db.contains(item));
+    }
+
+    std::cout << "Test Eight Pass" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
-    char* env_db_path_raw = std::getenv("DB_PATH");
+    char *env_db_path_raw = std::getenv("DB_PATH");
     db_path = std::string(env_db_path_raw);
+    clean_up_database();
+
     get_user_account(username, user_id, number_of_passwords);
+    for (int i = 0; i < number_of_passwords; ++i)
+    {
+        passwords_in_db.insert(i);
+    }
+
     test_content = DisplayContent::get_instance(&db_path);
     test_content->start_processes();
     test_one();
@@ -238,4 +283,6 @@ int main(int argc, char *argv[])
     test_six();
     test_seven();
     test_content->stop_processes();
+    test_eight();
+    clean_up_database();
 }

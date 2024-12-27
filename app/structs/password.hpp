@@ -12,13 +12,13 @@ struct password
     std::string encryped_password;
     std::string description;
     std::string url;
-    long long modify_date;
+    long long date_modified;
     long long date_created;
     int p_id;
     mutable std::mutex password_mutex;
 
     password();
-    password(std::string username, std::string password, std::string description, std::string url, int p_id);
+    password(std::string username, std::string password, std::string description, std::string url, long long date_created, long long date_modified, int p_id);
     password(const password &other);
     ~password();
 

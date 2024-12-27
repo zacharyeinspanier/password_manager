@@ -76,6 +76,7 @@ void DisplayContent::start_processes()
 {
     this->opeation_thread = std::thread(&DisplayContent::operation_process, this);
     this->search_thread = std::thread(&DisplayContent::search_bar_process, this);
+    this->data_store_thread = std::thread(&DisplayContent::periodic_data_store, this);
 }
 
 void DisplayContent::stop_processes()
