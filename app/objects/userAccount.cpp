@@ -42,35 +42,18 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
     // This callback is invoked each time the SELECT query finds a matching row.
     // This callback is used to store user data as a password, and insert the password into initial_user_data
     password curr_password;
-    for (int i = 0; i < argc; ++i)
-    {
-        std::string column_name(azColName[i]);
-        if (column_name == "USERNAME")
-            curr_password.username = argv[i];
-        if (column_name == "PASSWORD")
-            curr_password.encryped_password = argv[i];
-        if (column_name == "DESCRIPTION")
-            curr_password.description = argv[i];
-        if (column_name == "URL")
-            curr_password.url = argv[i];
-        if (column_name == "DATE_CREATED")
-        {
-            std::string date_created_string = argv[i];
-            curr_password.date_created = std::stoll(date_created_string);
-        }
-
-        if (column_name == "DATE_MODIFIED")
-        {
-            std::string date_modified_string = argv[i];
-            curr_password.date_modified = std::stoll(date_modified_string);
-        }
-        if (column_name == "PASSWORD_ID")
-        {
-            std::string p_id_string = argv[i];
-            curr_password.p_id = stoi(p_id_string);
-        }
-    }
+    curr_password.username = argv[0];
+    curr_password.encryped_password = argv[1];
+    curr_password.description = argv[2];
+    curr_password.url = argv[3];
+    std::string date_created_string = argv[4];
+    curr_password.date_created = std::stoll(date_created_string);
+    std::string date_modified_string = argv[5];
+    curr_password.date_modified = std::stoll(date_modified_string);
+    std::string p_id_string = argv[6];
+    curr_password.p_id = stoi(p_id_string);
     UserAccount::initial_user_data.push_back(curr_password);
+    
     return 0;
 }
 
