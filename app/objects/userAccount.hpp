@@ -50,6 +50,7 @@ public:
     UserAccount(const UserAccount &obj) = delete;
     static UserAccount *initialize_instance(std::string const username, const int user_id, std::string *db_path);
     static UserAccount *get_instance();
+    static void deinitialize_instance();
     
 
     void add_password(const password *new_password);

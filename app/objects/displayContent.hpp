@@ -84,6 +84,7 @@ public:
     // Delete the copy constructor
     DisplayContent(const DisplayContent &obj) = delete;
     static DisplayContent *get_instance(std::string * db_path);
+    static void deinitialize_instance();
     void start_processes();
     void stop_processes(); // TODO calling this fuction could be apart of the deconstructor
     void reset_display_list();

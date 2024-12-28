@@ -19,6 +19,7 @@ UserAccount::UserAccount(const std::string username, const int user_id, std::str
         this->add_password(&UserAccount::initial_user_data[i]);
     }
 }
+UserAccount::~UserAccount() {}
 
 UserAccount *UserAccount::initialize_instance(std::string const username, const int user_id, std::string *db_path)
 {
@@ -37,6 +38,11 @@ UserAccount *UserAccount::get_instance()
     return instance_ptr;
 }
 
+void UserAccount::deinitialize_instance()
+{
+    instance_ptr = nullptr;
+}
+
 int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
 {
     // This callback is invoked each time the SELECT query finds a matching row.
@@ -53,7 +59,7 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
     std::string p_id_string = argv[6];
     curr_password.p_id = stoi(p_id_string);
     UserAccount::initial_user_data.push_back(curr_password);
-    
+
     return 0;
 }
 
@@ -260,8 +266,6 @@ bool UserAccount::contains_password(const int p_id)
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     return this->pass_id_map.contains(p_id);
 }
-
-UserAccount::~UserAccount() {}
 
 int UserAccount::get_user_id()
 {

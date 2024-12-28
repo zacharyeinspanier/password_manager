@@ -1,6 +1,0 @@
-Stories:
-    DONE 1: laod user data from sql data base inside useraccount
-    DONE 2: remove vector<passwords> user_data from userAccount constructor.
-       Tests will need to be changed to store passwords within db.
-       It would be nice to remove them as well. 
-    3: Finish Perodic data store 

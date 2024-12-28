@@ -9,12 +9,8 @@ UserAccount *UserAccount::instance_ptr = nullptr;
 std::mutex UserAccount::user_acc_mutex;
 std::vector<password> UserAccount::initial_user_data;
 
-DisplayContent * launch_app(std::string const username, const int user_id, std::string *db_path){
+DisplayContent * launch_app(const std::string username, const int user_id, std::string *db_path){
     UserAccount::initialize_instance(username, user_id, db_path);
-    // TODO:
-    // 1: need db_path
-    // 2: we need to call load user data
-    // so we will load user data in user account using user_id
     DisplayContent * display = DisplayContent::get_instance(db_path);
     display-> start_processes();
     return display;
@@ -22,4 +18,6 @@ DisplayContent * launch_app(std::string const username, const int user_id, std::
 
 void quit_app(DisplayContent * display){
     display->stop_processes();
+    UserAccount::deinitialize_instance();
+    DisplayContent::deinitialize_instance();
 }

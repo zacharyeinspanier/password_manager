@@ -1,17 +1,20 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "../app/app.cpp"
+
 #include <QMessageBox>
 #include <cstdlib>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
 
-void display_message(QString msg, QMessageBox::Icon icon){
-    QMessageBox errMsgBox;
-    errMsgBox.setIcon(icon);
-    errMsgBox.setText(msg);
-    errMsgBox.setStandardButtons(QMessageBox::Ok);
-    errMsgBox.exec();
+void display_message(QString msg, QMessageBox::Icon icon)
+{
+    QMessageBox infoBox;
+    infoBox.setIcon(icon);
+    infoBox.setText(msg);
+    infoBox.setStandardButtons(QMessageBox::Ok);
+    infoBox.exec();
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -19,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    user_loggedin = false;
+    user_content = nullptr;
+    this->account_create_and_login_display();
 }
 
 MainWindow::~MainWindow()
@@ -26,11 +32,56 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::SetDBPath(QString *env_db_path){
+void MainWindow::SetDBPath(QString *env_db_path)
+{
     this->db_path = env_db_path;
 }
 
-QSqlDatabase MainWindow::GetDatabase(){
+void MainWindow::account_create_and_login_display()
+{
+    // UI object to show
+    this->ui->create_acc_btn->show();
+    this->ui->login_btn->show();
+    this->ui->password_input->show();
+    this->ui->username_input->show();
+    this->ui->password_label->show();
+    this->ui->username_label->show();
+
+    // UI object to hide
+    this->ui->search_btn->hide();
+    this->ui->search_input->hide();
+    this->ui->password_add_btn->hide();
+    this->ui->password_remove_btn->hide();
+    this->ui->password_modify_btn->hide();
+    this->ui->password_view_btn->hide();
+    this->ui->password_table->hide();
+    this->ui->logout_btn->hide();
+}
+
+void MainWindow::user_account_display()
+{
+    // UI object to hide
+    this->ui->create_acc_btn->hide();
+    this->ui->login_btn->hide();
+    this->ui->password_input->hide();
+    this->ui->username_input->hide();
+    this->ui->password_label->hide();
+    this->ui->username_label->hide();
+
+    // UI object to show
+    this->ui->search_btn->show();
+    this->ui->search_input->show();
+    this->ui->password_add_btn->show();
+    this->ui->password_remove_btn->show();
+    this->ui->password_modify_btn->show();
+    this->ui->password_view_btn->show();
+    this->ui->password_table->show();
+    this->ui->logout_btn->show();
+
+}
+
+QSqlDatabase MainWindow::GetDatabase()
+{
 
     QSqlDatabase db_con = QSqlDatabase::addDatabase("QSQLITE");
     db_con.setDatabaseName(*this->db_path);
@@ -75,7 +126,7 @@ void MainWindow::on_create_acc_btn_clicked()
         insertUserQuery.bindValue(":password", password);
 
         if(insertUserQuery.exec()){
-            QString info_msg = "Create account was successful";
+            QString info_msg = "Account for user" + username + " was successfully created";
             display_message(info_msg, QMessageBox::Information);
         }
         else{
@@ -145,3 +196,81 @@ void MainWindow::on_login_btn_clicked()
     db_con.close();
 
 }
+
+void MainWindow::login(std::string username, int user_id)
+{
+    std::string db_path_std_string = this->db_path->toStdString();
+    this->user_content = launch_app(username, user_id, &db_path_std_string);
+    this->user_loggedin = true;
+    this->user_account_display();
+}
+
+void MainWindow::logout()
+{
+    quit_app(this->user_content);
+    this->user_loggedin = false;
+    this->user_content = nullptr;
+    this->account_create_and_login_display();
+}
+
+void MainWindow::on_search_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+
+}
+
+
+void MainWindow::on_logout_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+}
+
+
+void MainWindow::on_password_add_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+}
+
+
+void MainWindow::on_password_remove_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+
+}
+
+
+void MainWindow::on_password_modify_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+}
+
+
+void MainWindow::on_password_view_btn_clicked()
+{
+    if(this->user_loggedin == false || this->user_content == nullptr){
+        QString warningMsg = "Error: user is not logged in!!";
+        display_message(warningMsg, QMessageBox::Warning);
+        return;
+    }
+}
+

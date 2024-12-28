@@ -46,6 +46,10 @@ DisplayContent *DisplayContent::get_instance(std::string * db_path)
 
     return instance_ptr;
 }
+void DisplayContent::deinitialize_instance() 
+{
+    instance_ptr = nullptr;
+}
 
 void DisplayContent::reset_display_list()
 {
@@ -81,8 +85,6 @@ void DisplayContent::start_processes()
 
 void DisplayContent::stop_processes()
 {
-
-
     // Search process exit
     {
         std::lock_guard<std::mutex> search_lock(this->search_term_mutex);

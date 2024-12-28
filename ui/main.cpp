@@ -4,7 +4,7 @@
 #include <QLocale>
 #include <QTranslator>
 #include <QMessageBox>
-#include "../app/app.cpp"
+
 
 QString env_db_path = NULL;
 // User account
@@ -41,10 +41,6 @@ int main(int argc, char *argv[])
     w.show();
     return a.exec();
 
-    // when the application window exits we will need to do the following
-    // 1: retrieve the user_id
-    // 2: load user data from sql data base
-    // 3: call start app
-    // 4: create a new application
-    // 5: show and start the application.
+    // When the user successfully loggs in the login objects will be set to hide
+    // and the account display objects will be set to show.
 }
