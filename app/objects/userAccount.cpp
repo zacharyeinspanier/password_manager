@@ -1,52 +1,29 @@
 #include "userAccount.hpp"
 
 // userAccount implementation
-UserAccount::UserAccount(std::string username, int user_id)
-{
-    this->account_username = username;
-    this->user_id = user_id;
-}
-
 UserAccount::UserAccount(const std::string username, const int user_id, std::string *db_path)
 {
     this->account_username = username;
     this->user_id = user_id;
     this->db_path = *db_path;
     this->current_password_id = 0;
+
+    this->get_user_data();
+    
     for (int i = 0; i < UserAccount::initial_user_data.size(); ++i)
     {
         this->current_password_id = std::max(this->current_password_id, UserAccount::initial_user_data[i].p_id);
         this->add_password(&UserAccount::initial_user_data[i]);
     }
 }
+
 UserAccount::~UserAccount() {}
-
-UserAccount *UserAccount::initialize_instance(std::string const username, const int user_id, std::string *db_path)
-{
-    if (UserAccount::instance_ptr == nullptr)
-    {
-        std::lock_guard<std::mutex> lock(UserAccount::user_acc_mutex);
-        UserAccount::get_user_data(user_id, *db_path);
-        UserAccount::instance_ptr = new UserAccount(username, user_id, db_path);
-    }
-
-    return instance_ptr;
-}
-
-UserAccount *UserAccount::get_instance()
-{
-    return instance_ptr;
-}
-
-void UserAccount::deinitialize_instance()
-{
-    instance_ptr = nullptr;
-}
 
 int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
 {
     // This callback is invoked each time the SELECT query finds a matching row.
     // This callback is used to store user data as a password, and insert the password into initial_user_data
+    std::lock_guard<std::mutex> user_data_mutex(UserAccount::user_data_mutex);
     password curr_password;
     curr_password.username = argv[0];
     curr_password.encryped_password = argv[1];
@@ -63,12 +40,12 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
     return 0;
 }
 
-void UserAccount::get_user_data(int user_id, std::string db_path)
+void UserAccount::get_user_data()
 {
 
     sqlite3 *db;
     int rc;
-    const char *path = &db_path[0];
+    const char *path = &this->db_path[0];
     rc = sqlite3_open(path, &db);
 
     if (rc != SQLITE_OK)
@@ -78,7 +55,7 @@ void UserAccount::get_user_data(int user_id, std::string db_path)
     }
     else
     {
-        std::string sql = "SELECT * FROM USER_DATA WHERE USERID ==" + std::to_string(user_id) + ";";
+        std::string sql = "SELECT * FROM USER_DATA WHERE USERID ==" + std::to_string(this->user_id) + ";";
         std::string data = "CALLBACK FUNCTION";
         int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback, (void *)data.c_str(), NULL);
 

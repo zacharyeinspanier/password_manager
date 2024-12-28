@@ -4,9 +4,9 @@
 #include "../processes/process_search_bar.cpp"
 
 // Constructor
-DisplayContent::DisplayContent(std::string * db_path)
+DisplayContent::DisplayContent(std::string username, int user_id, std::string * db_path)
 {
-    this->usr_acc = UserAccount::get_instance();
+    this->usr_acc = new UserAccount(username, user_id, db_path);
     {
         // get initial copy of data
         std::lock_guard<std::mutex> lock_display_passwords(this->display_passwords_mutex);
@@ -36,12 +36,12 @@ DisplayContent::DisplayContent(std::string * db_path)
 // Checks if the instance has been initialized
 // if so, return the instance pointer
 // otherwise create an instance of the object with new
-DisplayContent *DisplayContent::get_instance(std::string * db_path)
+DisplayContent *DisplayContent::get_instance(std::string username, int user_id, std::string * db_path)
 {
     if (DisplayContent::instance_ptr == nullptr)
     {
         std::lock_guard<std::mutex> lock(DisplayContent::display_content_mutex);
-        DisplayContent::instance_ptr = new DisplayContent(db_path);
+        DisplayContent::instance_ptr = new DisplayContent(username, user_id, db_path);
     }
 
     return instance_ptr;

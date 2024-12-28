@@ -5,8 +5,7 @@ int number_of_passwords = 10;
 int curr_pass_id = 0;
 std::string username = "test_user";
 
-UserAccount *UserAccount::instance_ptr = nullptr;
-std::mutex UserAccount::user_acc_mutex;
+std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
 UserAccount *test_user = nullptr;
 std::set<std::shared_ptr<password>> search_result;
@@ -64,15 +63,6 @@ void test_five()
     std::cout << "Test Five Pass" << std::endl;
 }
 
-void test_six()
-{
-    // TEST UserAccount::get_instance()
-    UserAccount *usr_acc_get_instance = UserAccount::get_instance();
-    assert(usr_acc_get_instance == test_user);
-    UserAccount *usr_acc_initialize = UserAccount::initialize_instance(username, user_id, &db_path);
-    assert(usr_acc_initialize == test_user);
-    std::cout << "Test Six Pass" << std::endl;
-}
 
 void test_seven()
 {
@@ -240,7 +230,7 @@ int main(int argc, char *argv[])
     test_three();
     test_four();
     test_five();
-    test_six();
+    //test_six();
     test_seven();
     test_eight();
     test_nine();

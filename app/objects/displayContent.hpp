@@ -26,7 +26,7 @@ private:
     std::mutex display_passwords_mutex;
     std::set<std::shared_ptr<password>> display_passwords;
     std::mutex user_account_mutex;
-    UserAccount *usr_acc;
+    UserAccount * usr_acc;
 
     // Operations
     bool operation_event_state;
@@ -60,7 +60,7 @@ private:
     std::condition_variable exit_threads_cv;
 
     // Methods
-    DisplayContent(std::string * db_path);
+    DisplayContent(std::string username, int user_id, std::string * db_path);
 
     // This thread will process operations such as add, remove, modify, and view
     //
@@ -83,7 +83,7 @@ private:
 public:
     // Delete the copy constructor
     DisplayContent(const DisplayContent &obj) = delete;
-    static DisplayContent *get_instance(std::string * db_path);
+    static DisplayContent *get_instance(std::string username, int user_id, std::string * db_path);
     static void deinitialize_instance();
     void start_processes();
     void stop_processes(); // TODO calling this fuction could be apart of the deconstructor

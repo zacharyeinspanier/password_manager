@@ -4,8 +4,7 @@
 DisplayContent *DisplayContent::instance_ptr = nullptr;
 std::mutex DisplayContent::display_content_mutex;
 
-UserAccount *UserAccount::instance_ptr = nullptr;
-std::mutex UserAccount::user_acc_mutex;
+std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
 
 int number_of_passwords = 10;
@@ -273,7 +272,7 @@ int main(int argc, char *argv[])
         passwords_in_db.insert(i);
     }
 
-    test_content = DisplayContent::get_instance(&db_path);
+    test_content = DisplayContent::get_instance(username, user_id, &db_path);
     test_content->start_processes();
     test_one();
     test_two();

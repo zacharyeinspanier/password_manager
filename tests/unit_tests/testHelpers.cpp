@@ -61,7 +61,7 @@ void generate_passwords(int number)
 UserAccount *get_user_account(std::string username, int user_id, int number)
 {
     generate_passwords(number);
-    return UserAccount::initialize_instance(username, user_id, &db_path);
+    return new UserAccount(username, user_id, &db_path);
 }
 
 void clean_up_database()
