@@ -6,7 +6,6 @@ void DisplayContent::search_bar_process()
     std::unique_lock<std::mutex> search_loop_lock(this->search_loop_mutex, std::defer_lock);
     std::unique_lock<std::mutex> user_account_lock(this->user_account_mutex, std::defer_lock);
     std::unique_lock<std::mutex> display_passwords_lock(this->display_passwords_mutex, std::defer_lock);
-    std::unique_lock<std::mutex> exit_threads_lock(this->exit_threads_mutex, std::defer_lock);
 
     while (true)
     {
@@ -19,12 +18,7 @@ void DisplayContent::search_bar_process()
         // EXIT LOOP
         search_loop_lock.lock();
         if (this->search_loop_exit)
-        {   
-            exit_threads_lock.lock();
-            this->search_thread_done = true;
-            exit_threads_lock.unlock();
-            this->exit_threads_cv.notify_all();
-            
+        {               
             search_loop_lock.unlock();
             break;
         }

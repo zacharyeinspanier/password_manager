@@ -8,7 +8,7 @@ echo "=================="
 ./output/userAccountTests
 echo "=================="
 
-g++ unit_tests/displayContentTests.cpp -o ./output/displayContentTests -std=c++20 -lsqlite3
+g++ -g unit_tests/displayContentTests.cpp -o ./output/displayContentTests -std=c++20 -lsqlite3 
 
 echo "=================="
 echo "Display Content Tests"

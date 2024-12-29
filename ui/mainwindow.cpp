@@ -207,9 +207,9 @@ void MainWindow::login(std::string username, int user_id)
 
 void MainWindow::logout()
 {
-    quit_app(this->user_content);
-    this->user_loggedin = false;
+    delete this->user_content;
     this->user_content = nullptr;
+    this->user_loggedin = false;
     this->account_create_and_login_display();
 }
 

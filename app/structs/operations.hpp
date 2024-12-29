@@ -18,7 +18,6 @@ enum modifyType
     MODIFY_NONE,
 };
 
-// TODO: Implement copy constructor
 struct operation
 {
     operationType operation_type;

@@ -224,7 +224,10 @@ int main(int argc, char *argv[])
     char *env_db_path_raw = std::getenv("DB_PATH");
     db_path = std::string(env_db_path_raw);
     clean_up_database();
-    test_user = get_user_account(username, user_id, number_of_passwords);
+    generate_passwords(number_of_passwords);
+
+
+    test_user = new UserAccount(username, user_id, &db_path);
     test_one();
     test_two();
     test_three();
@@ -238,4 +241,7 @@ int main(int argc, char *argv[])
     test_twelve();
     test_eleven();
     clean_up_database();
+    
+    delete test_user;
+    return 0;
 }

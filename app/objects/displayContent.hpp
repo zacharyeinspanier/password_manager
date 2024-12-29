@@ -20,13 +20,10 @@
 class DisplayContent
 {
 private:
-    static DisplayContent *instance_ptr;
-    static std::mutex display_content_mutex;
-
     std::mutex display_passwords_mutex;
     std::set<std::shared_ptr<password>> display_passwords;
     std::mutex user_account_mutex;
-    UserAccount * usr_acc;
+    UserAccount *usr_acc = nullptr;
 
     // Operations
     bool operation_event_state;
@@ -53,14 +50,6 @@ private:
     std::mutex data_store_loop_mutex;
     bool data_store_exit;
 
-    // EXIT Threads
-    bool search_thread_done;
-    bool operation_thread_done;
-    std::mutex exit_threads_mutex;
-    std::condition_variable exit_threads_cv;
-
-    // Methods
-    DisplayContent(std::string username, int user_id, std::string * db_path);
 
     // This thread will process operations such as add, remove, modify, and view
     //
@@ -80,19 +69,17 @@ private:
 
     void periodic_data_store();
 
+    void start_processes();
+    void stop_processes();
+
 public:
     // Delete the copy constructor
-    DisplayContent(const DisplayContent &obj) = delete;
-    static DisplayContent *get_instance(std::string username, int user_id, std::string * db_path);
-    static void deinitialize_instance();
-    void start_processes();
-    void stop_processes(); // TODO calling this fuction could be apart of the deconstructor
+    DisplayContent(std::string username, int user_id, std::string *db_path);
+    ~DisplayContent();
     void reset_display_list();
     std::vector<password> get_display_list();
     void operation_event(operation &new_operation);
     void search_event(std::string &new_search_term);
-
-
 };
 
 #endif

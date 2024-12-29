@@ -1,9 +1,6 @@
 #include "./testHelpers.cpp"
 #include "../../app/objects/displayContent.cpp"
 
-DisplayContent *DisplayContent::instance_ptr = nullptr;
-std::mutex DisplayContent::display_content_mutex;
-
 std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
 
@@ -12,7 +9,8 @@ int curr_pass_id = 0;
 std::string username = "test_user";
 std::set<int> passwords_in_db_sql_query;
 std::set<int> passwords_in_db;
-DisplayContent *test_content;
+DisplayContent *test_content = nullptr;
+std::string test;
 
 void test_one()
 {
@@ -26,7 +24,8 @@ void test_one()
         new_password.p_id = 101 + i;
         new_password.username = "username_" + std::to_string(101 + i);
         new_password.encryped_password = "password_" + std::to_string(101 + i);
-        new_ids.insert(101 + i);
+        new_ids.insert(new_password.p_id);
+        passwords_in_db.insert(new_password.p_id);
         new_operation.modify_type = modifyType::MODIFY_NONE;
         new_operation.operation_type = operationType::ADD;
         new_operation.new_password = new_password;
@@ -62,6 +61,7 @@ void test_two()
         remove_password.username = "username_" + std::to_string(101 + i);
         remove_password.encryped_password = "password_" + std::to_string(101 + i);
         remove_ids.insert(101 + i);
+        passwords_in_db.erase(remove_password.p_id);
         remove_operation.modify_type = modifyType::MODIFY_NONE;
         remove_operation.operation_type = operationType::REMOVE;
         remove_operation.new_password = remove_password;
@@ -157,7 +157,7 @@ void test_five()
         add_password.description = "description temp";
         add_password.date_created = time(0);
         add_password.date_modified = time(0);
-        passwords_same_url.insert(501 + i);
+        passwords_same_url.insert(add_password.p_id);
         passwords_in_db.insert(add_password.p_id);
         add_operation.modify_type = modifyType::MODIFY_NONE;
         add_operation.operation_type = operationType::ADD;
@@ -185,7 +185,6 @@ void test_five()
 
 void test_six()
 {
-
     // TEST SIX: preivous results are erased when repeatly running search.
 
     // test five searched for URL and resulted in number_of_passwords
@@ -263,17 +262,18 @@ void test_eight()
 int main(int argc, char *argv[])
 {
     char *env_db_path_raw = std::getenv("DB_PATH");
+    test = std::string(env_db_path_raw);
     db_path = std::string(env_db_path_raw);
-    clean_up_database();
+    //clean_up_database();
 
-    get_user_account(username, user_id, number_of_passwords);
+    generate_passwords(number_of_passwords);
     for (int i = 0; i < number_of_passwords; ++i)
     {
         passwords_in_db.insert(i);
     }
+    
 
-    test_content = DisplayContent::get_instance(username, user_id, &db_path);
-    test_content->start_processes();
+    test_content = new DisplayContent(username, user_id, &test);
     test_one();
     test_two();
     test_three();
@@ -281,7 +281,17 @@ int main(int argc, char *argv[])
     test_five();
     test_six();
     test_seven();
-    test_content->stop_processes();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     test_eight();
     clean_up_database();
+    try {
+        delete test_content;
+    }catch(const std::exception& e){
+        std::cerr << "Caught exception: " << e.what() << std::endl;
+        return 1; // Indicate an error
+    }
+
+    // std::cout << "after delete" << std::endl;
+    // test_content = nullptr;
+    return 0;
 }

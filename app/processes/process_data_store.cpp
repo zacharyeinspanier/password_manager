@@ -68,7 +68,6 @@ void DisplayContent::periodic_data_store()
 
         if (final_store_and_exit)
         {
-            // Final data store complete
             break;
         }
     }
