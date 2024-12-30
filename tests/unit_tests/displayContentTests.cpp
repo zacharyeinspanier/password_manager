@@ -168,7 +168,7 @@ void test_five()
     test_content->search_event(test_url);
 
     // Sleep to allow operation queue to empty
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
     auto user_data = test_content->get_display_list();
 
@@ -262,18 +262,16 @@ void test_eight()
 int main(int argc, char *argv[])
 {
     char *env_db_path_raw = std::getenv("DB_PATH");
-    test = std::string(env_db_path_raw);
     db_path = std::string(env_db_path_raw);
-    //clean_up_database();
+    clean_up_database();
 
     generate_passwords(number_of_passwords);
     for (int i = 0; i < number_of_passwords; ++i)
     {
         passwords_in_db.insert(i);
     }
-    
 
-    test_content = new DisplayContent(username, user_id, &test);
+    test_content = new DisplayContent(username, user_id, &db_path);
     test_one();
     test_two();
     test_three();
@@ -284,14 +282,7 @@ int main(int argc, char *argv[])
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     test_eight();
     clean_up_database();
-    try {
-        delete test_content;
-    }catch(const std::exception& e){
-        std::cerr << "Caught exception: " << e.what() << std::endl;
-        return 1; // Indicate an error
-    }
-
-    // std::cout << "after delete" << std::endl;
-    // test_content = nullptr;
+    delete test_content;
+    test_content = nullptr;
     return 0;
 }
