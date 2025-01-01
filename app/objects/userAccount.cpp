@@ -35,6 +35,7 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
     curr_password.date_modified = std::stoll(date_modified_string);
     std::string p_id_string = argv[6];
     curr_password.p_id = stoi(p_id_string);
+
     UserAccount::initial_user_data.push_back(curr_password);
 
     return 0;
@@ -55,7 +56,7 @@ void UserAccount::get_user_data()
     }
     else
     {
-        std::string sql = "SELECT * FROM USER_DATA WHERE USERID ==" + std::to_string(this->user_id) + ";";
+        std::string sql = "SELECT * FROM USER_DATA WHERE USERID =" + std::to_string(this->user_id) + ";";
         std::string data = "CALLBACK FUNCTION";
         int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback, (void *)data.c_str(), NULL);
 

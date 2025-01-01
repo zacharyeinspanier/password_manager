@@ -20,8 +20,8 @@ void generate_passwords(int number)
     {
         std::cerr << "Error opening sql db" << std::endl;
     }
-    auto duration = now.time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    std::chrono::system_clock::duration duration = now.time_since_epoch();
+    long long millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     // Here we will need to insert into the data base.
     for (int i = 0; i < number; ++i)
     {

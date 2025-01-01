@@ -4,7 +4,7 @@
 #include "../processes/process_search_bar.cpp"
 
 // Constructor
-DisplayContent::DisplayContent(std::string username, int user_id, std::string * db_path)
+DisplayContent::DisplayContent(std::string username, int user_id, std::string *db_path)
 {
     this->usr_acc = new UserAccount(username, user_id, db_path);
     {
@@ -31,9 +31,11 @@ DisplayContent::DisplayContent(std::string username, int user_id, std::string * 
     this->start_processes();
 }
 
-DisplayContent::~DisplayContent(){
+DisplayContent::~DisplayContent()
+{
     this->stop_processes();
-    if(this->usr_acc){
+    if (this->usr_acc)
+    {
         delete this->usr_acc;
         this->usr_acc = nullptr;
     }
@@ -92,6 +94,7 @@ void DisplayContent::stop_processes()
         this->operation_loop_exit = true;
         this->operation_event_state = true;
         operation empty_operation;
+        empty_operation.operation_type = operationType::NONE;
         this->operation_queue.push(empty_operation);
     }
     this->operation_cv.notify_all(); // notify wakes thread -> then exit

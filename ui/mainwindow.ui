@@ -245,12 +245,27 @@
    <widget class="QTableWidget" name="password_table">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>70</x>
       <y>90</y>
-      <width>401</width>
+      <width>631</width>
       <height>331</height>
      </rect>
     </property>
+    <column>
+     <property name="text">
+      <string>New Column</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Username</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Description</string>
+     </property>
+    </column>
    </widget>
    <widget class="QPushButton" name="password_add_btn">
     <property name="geometry">

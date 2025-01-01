@@ -17,7 +17,6 @@ void DisplayContent::operation_process()
         operation current_operation = this->operation_queue.front();
         this->operation_queue.pop();
 
-    
         user_account_lock.lock();
         // !!CRITICA CODE!! //
         switch (current_operation.operation_type)
@@ -46,6 +45,8 @@ void DisplayContent::operation_process()
         case operationType::VIEW:
             this->usr_acc->view_password(current_operation.new_password.p_id);
             break;
+        case operationType::NONE:
+            break;
         default:
             break;
         }
@@ -62,7 +63,8 @@ void DisplayContent::operation_process()
         }
         operation_exit_lock.unlock();
 
-        if(this->operation_queue.empty()){
+        if (this->operation_queue.empty())
+        {
             this->operation_event_state = false;
         }
 

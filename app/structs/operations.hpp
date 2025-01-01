@@ -8,7 +8,8 @@ enum operationType
     ADD,
     MODIFY,
     REMOVE,
-    VIEW
+    VIEW,
+    NONE
 };
 
 enum modifyType

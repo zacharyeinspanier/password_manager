@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QtSql/QSqlDatabase>
 #include "../app/objects/displayContent.hpp"
+#include "./add_password.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -39,16 +40,19 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    add_password *password_form;
     QString *db_path;
     QSqlDatabase GetDatabase();
-    bool user_loggedin;
     DisplayContent * user_content;
+    bool user_loggedin;
+    bool search_active;
 
 
     void account_create_and_login_display();
     void user_account_display();
     void login(std::string username, int user_id);
     void logout();
+    void update_display_table();
 
 
 };

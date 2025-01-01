@@ -1,0 +1,4 @@
+Okay, when the user loggs out, 
+
+    1: A passwrod is added without a username
+    2: the final data store stores an undeclared passwrod. 

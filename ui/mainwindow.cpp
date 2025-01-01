@@ -22,8 +22,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     user_loggedin = false;
+    search_active = false;
     user_content = nullptr;
     this->account_create_and_login_display();
+    this->password_form = new add_password();
+
 }
 
 MainWindow::~MainWindow()
@@ -206,16 +209,39 @@ void MainWindow::on_login_btn_clicked()
     db_con.close();
 }
 
+void MainWindow::update_display_table()
+{
+    if(!this->search_active){
+        this->user_content->reset_display_list();
+        std::vector<password> user_data = this->user_content->get_display_list();
+        this->ui->password_table->clearContents();
+        this->ui->password_table->setRowCount(user_data.size());
+
+        for(int i = 0; i < user_data.size(); ++i){
+            this->ui->password_table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(user_data[i].username)));
+            this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(user_data[i].url)));
+            this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(user_data[i].description)));
+        }
+    }
+}
+
 void MainWindow::login(std::string username, int user_id)
 {
     std::string db_path_std_string = this->db_path->toStdString();
     this->user_content = launch_app(username, user_id, &db_path_std_string);
+
+    this->password_form->set_callback([this](operation new_operation) -> void{
+        this->user_content->operation_event(new_operation);
+    });
+
     this->user_loggedin = true;
     this->user_account_display();
+    this->update_display_table();
 }
 
 void MainWindow::logout()
 {
+    //this->password_form->set_callback([](operation new_operation) -> void {});
     delete this->user_content;
     this->user_content = nullptr;
     this->user_loggedin = false;
@@ -252,12 +278,7 @@ void MainWindow::on_password_add_btn_clicked()
         return;
     }
 
-    //1: create input field box
-    //2: capture user input
-    //3: create an ADD operation
-    //4: call operation event
-    //5: call reset display
-
+    this->password_form->show();
 }
 
 void MainWindow::on_password_remove_btn_clicked()
@@ -302,6 +323,15 @@ void MainWindow::on_password_view_btn_clicked()
         return;
     }
 
+    this->user_content->reset_display_list();
+    auto user_data = this->user_content->get_display_list();
+
+    for(auto item: user_data){
+        std::cout<< item.username << std::endl;
+        std::cout<< item.p_id << std::endl;
+    }
+    this->update_display_table();
+
     //1: get the item
     // this->ui->password_table->currentItem();
     //2: get the create a temporary password
@@ -310,3 +340,12 @@ void MainWindow::on_password_view_btn_clicked()
     //5: display password is a qt box widget
         // unsure how the password will be set to ui...
 }
+
+//TODO:
+// I need a mechanism that will call reset_display_list() and get_display_list()
+// This should only refresh if there is no search results
+
+
+
+
+
