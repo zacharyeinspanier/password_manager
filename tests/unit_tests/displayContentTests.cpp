@@ -281,8 +281,8 @@ int main(int argc, char *argv[])
     test_seven();
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     test_eight();
-    clean_up_database();
     delete test_content;
     test_content = nullptr;
+    clean_up_database();
     return 0;
 }

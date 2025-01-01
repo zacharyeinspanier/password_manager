@@ -69,11 +69,13 @@ void clean_up_database()
         std::cerr << "Error opening sql db" << std::endl;
     }
 
-    char sql_insert[500];
-    snprintf(sql_insert, sizeof(sql_insert), "DELETE FROM USER_DATA WHERE USERID = %s", std::to_string(user_id).c_str());
+    char sql_delete[500];
+    snprintf(sql_delete, sizeof(sql_delete), "DELETE FROM USER_DATA WHERE USERID = %s;", std::to_string(user_id).c_str());
+    //snprintf(sql_delete, sizeof(sql_delete), "DELETE FROM USER_DATA WHERE USERID = 2;");
     int rc_exec;
     char *messaggeError;
-    rc_exec = sqlite3_exec(db, sql_insert, NULL, 0, &messaggeError);
+    rc_exec = sqlite3_exec(db, sql_delete, NULL, 0, &messaggeError);
+    // std::cout << messaggeError << std::endl;
     if (rc_exec != SQLITE_OK)
     {
         std::cerr << "Error delete" << std::endl;

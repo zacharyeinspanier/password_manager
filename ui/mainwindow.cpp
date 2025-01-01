@@ -241,7 +241,7 @@ void MainWindow::login(std::string username, int user_id)
 
 void MainWindow::logout()
 {
-    //this->password_form->set_callback([](operation new_operation) -> void {});
+    this->password_form->set_callback([](operation new_operation) -> void {});
     delete this->user_content;
     this->user_content = nullptr;
     this->user_loggedin = false;
