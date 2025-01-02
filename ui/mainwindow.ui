@@ -253,12 +253,12 @@
     </property>
     <column>
      <property name="text">
-      <string>New Column</string>
+      <string>Username</string>
      </property>
     </column>
     <column>
      <property name="text">
-      <string>Username</string>
+      <string>URL</string>
      </property>
     </column>
     <column>

@@ -38,12 +38,15 @@ private slots:
 
     void on_password_view_btn_clicked();
 
+    void on_password_table_cellDoubleClicked(int row, int column);
+
 private:
     Ui::MainWindow *ui;
     add_password *password_form;
     QString *db_path;
     QSqlDatabase GetDatabase();
     DisplayContent * user_content;
+    std::vector<password> table_display_items;
     bool user_loggedin;
     bool search_active;
 

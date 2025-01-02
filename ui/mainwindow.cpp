@@ -27,11 +27,20 @@ MainWindow::MainWindow(QWidget *parent)
     this->account_create_and_login_display();
     this->password_form = new add_password();
 
+    // UI Objects initial state
+    this->ui->password_input->setEchoMode(QLineEdit::Password);
+    //TODO:
+    // Table column widths need to be set
+    // this->ui->password_table->
+
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    if(this->user_content != nullptr){
+        delete this->user_content;
+    }
+    delete this->ui;
 }
 
 void MainWindow::SetDBPath(QString *env_db_path)
@@ -46,7 +55,6 @@ void MainWindow::account_create_and_login_display()
     this->ui->login_btn->show();
     this->ui->password_input->show();
     this->ui->password_input->clear();
-    this->ui->password_input->setEchoMode(QLineEdit::Password);
     this->ui->username_input->show();
     this->ui->username_input->clear();
     this->ui->password_label->show();
@@ -65,14 +73,6 @@ void MainWindow::account_create_and_login_display()
 
 void MainWindow::user_account_display()
 {
-    // UI object to hide
-    this->ui->create_acc_btn->hide();
-    this->ui->login_btn->hide();
-    this->ui->password_input->hide();
-    this->ui->username_input->hide();
-    this->ui->password_label->hide();
-    this->ui->username_label->hide();
-
     // UI object to show
     this->ui->search_btn->show();
     this->ui->search_input->show();
@@ -83,6 +83,14 @@ void MainWindow::user_account_display()
     this->ui->password_view_btn->show();
     this->ui->password_table->show();
     this->ui->logout_btn->show();
+
+    // UI object to hide
+    this->ui->create_acc_btn->hide();
+    this->ui->login_btn->hide();
+    this->ui->password_input->hide();
+    this->ui->username_input->hide();
+    this->ui->password_label->hide();
+    this->ui->username_label->hide();
 }
 
 QSqlDatabase MainWindow::GetDatabase()
@@ -211,18 +219,40 @@ void MainWindow::on_login_btn_clicked()
 
 void MainWindow::update_display_table()
 {
+
+    // search_active
+    // the user completes a search, the table should be updated to match their search
+    // user will need to remove their search in-order to display full list of passwords
     if(!this->search_active){
         this->user_content->reset_display_list();
-        std::vector<password> user_data = this->user_content->get_display_list();
-        this->ui->password_table->clearContents();
-        this->ui->password_table->setRowCount(user_data.size());
-
-        for(int i = 0; i < user_data.size(); ++i){
-            this->ui->password_table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(user_data[i].username)));
-            this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(user_data[i].url)));
-            this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(user_data[i].description)));
-        }
+    }else{
+        // TODO:
+        // Re-run search to get most up-to-date search results
     }
+
+    // TODO: here we are clearing passwords and re-writing to table_display_items.
+    // This will happen every time update_display_table is called.
+    // When complete, this will happen every time the user interacts with the app.
+    // TO improve space complexity, find a way to preserve data..?
+
+    // Maybe return shared pointers rather than complete copies??
+    // std::vector<shared_ptr<password> >
+    // this will not work since it will be without the mutex.
+    // probably not a good idea
+
+    this->table_display_items.clear();
+    this->table_display_items = this->user_content->get_display_list();
+
+
+    this->ui->password_table->clearContents();
+    this->ui->password_table->setRowCount(this->table_display_items.size());
+
+    for(int i = 0; i < this->table_display_items.size(); ++i){
+        this->ui->password_table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].username)));
+        this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].url)));
+        this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].description)));
+    }
+
 }
 
 void MainWindow::login(std::string username, int user_id)
@@ -290,11 +320,19 @@ void MainWindow::on_password_remove_btn_clicked()
         return;
     }
 
-    //1: get the item
-        // this->ui->password_table->currentItem();
-    //2: get the create a temporary password
-    //3: create remove operation
-    //4: call operation event
+    auto table_item = this->ui->password_table->currentItem();
+    password password = this->table_display_items[table_item->row()];
+
+
+    operation remove_password;
+    remove_password.operation_type = operationType::REMOVE;
+    remove_password.new_password = password;
+    remove_password.modify_type = modifyType::MODIFY_NONE;
+
+
+    this->user_content->operation_event(remove_password);
+
+    //TODO:
     //5: call reset display
 }
 
@@ -306,6 +344,7 @@ void MainWindow::on_password_modify_btn_clicked()
         display_message(warningMsg, QMessageBox::Warning);
         return;
     }
+    //TODO:
     //1: get the item
     // this->ui->password_table->currentItem();
     //2: get the create a temporary password
@@ -324,14 +363,9 @@ void MainWindow::on_password_view_btn_clicked()
     }
 
     this->user_content->reset_display_list();
-    auto user_data = this->user_content->get_display_list();
-
-    for(auto item: user_data){
-        std::cout<< item.username << std::endl;
-        std::cout<< item.p_id << std::endl;
-    }
     this->update_display_table();
 
+    // TODO:
     //1: get the item
     // this->ui->password_table->currentItem();
     //2: get the create a temporary password
@@ -343,9 +377,29 @@ void MainWindow::on_password_view_btn_clicked()
 
 //TODO:
 // I need a mechanism that will call reset_display_list() and get_display_list()
-// This should only refresh if there is no search results
+// The search and operations processes will be running and making changes to state.
+// it would be nice to reqularly refresh to get the most up-to-date state
+// maybe every X milliseconds or so... However this will cause many copies of passwords to be created and deleted
 
 
+void MainWindow::on_password_table_cellDoubleClicked(int row, int column)
+{
+    //TODO
+    // This will open a dialog box for
+    // 1: viewing the data
+    // 2: modify
 
+    // every time the user double clicks
+    // a new window will open
 
+    // 1: delete the old window if NOT nullptr
+    // 2: construct callback to queue operation
+    // 3: call constructor with copy of password
+
+    // we will have two buttons
+    // 1: show password (when loaded the password will be hid
+
+    QString msg  = "item double clicked";
+    display_message(msg, QMessageBox::Information);
+}
 
