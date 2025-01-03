@@ -50,7 +50,6 @@ private:
     std::mutex data_store_loop_mutex;
     bool data_store_exit;
 
-
     // This thread will process operations such as add, remove, modify, and view
     //
     // The thread will the object use UserAccount::<public operation functions>

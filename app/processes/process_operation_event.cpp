@@ -21,31 +21,16 @@ void DisplayContent::operation_process()
         // !!CRITICA CODE!! //
         switch (current_operation.operation_type)
         {
+        case operationType::NONE:
+        break;
         case operationType::ADD:
-            this->usr_acc->add_password(&current_operation.new_password);
+            this->usr_acc->add_password(&current_operation.curr_password);
             break;
         case operationType::REMOVE:
-            this->usr_acc->remove_password(current_operation.new_password.p_id);
+            this->usr_acc->remove_password(current_operation.curr_password.p_id);
             break;
         case operationType::MODIFY:
-            switch (current_operation.modify_type)
-            {
-            case modifyType::MODIFY_DESCRIPTION:
-                this->usr_acc->modify_password(current_operation.new_password.p_id, current_operation.new_password.description, modifyType::MODIFY_DESCRIPTION);
-                break;
-            case modifyType::MODIFY_PASSWORD:
-                this->usr_acc->modify_password(current_operation.new_password.p_id, current_operation.new_password.encryped_password, modifyType::MODIFY_PASSWORD);
-                break;
-            case modifyType::MODIFY_NONE:
-                // TODO this is an error
-                // On the otherhand... It is unlikley
-                break;
-            }
-            break;
-        case operationType::VIEW:
-            this->usr_acc->view_password(current_operation.new_password.p_id);
-            break;
-        case operationType::NONE:
+             this->usr_acc->modify_password(&current_operation.curr_password);
             break;
         default:
             break;

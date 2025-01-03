@@ -1,5 +1,7 @@
 #include "userAccount.hpp"
 
+std::string DEFAULT_STRING_VAL = "";
+
 // userAccount implementation
 UserAccount::UserAccount(const std::string username, const int user_id, std::string *db_path)
 {
@@ -7,9 +9,11 @@ UserAccount::UserAccount(const std::string username, const int user_id, std::str
     this->user_id = user_id;
     this->db_path = *db_path;
     this->current_password_id = 0;
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    this->time_since_epoch = now.time_since_epoch();
 
     this->get_user_data();
-    
+
     for (int i = 0; i < UserAccount::initial_user_data.size(); ++i)
     {
         this->current_password_id = std::max(this->current_password_id, UserAccount::initial_user_data[i].p_id);
@@ -79,6 +83,13 @@ void UserAccount::add_password(const password *new_password)
     {
         cpy_new_password.p_id = this->current_password_id + 1;
         this->current_password_id += 1;
+    }
+
+    // Set the dates in milliseconds
+    if (cpy_new_password.date_created == 0)
+    {
+        cpy_new_password.date_created = std::chrono::duration_cast<std::chrono::milliseconds>(this->time_since_epoch).count();
+        cpy_new_password.date_modified = std::chrono::duration_cast<std::chrono::milliseconds>(this->time_since_epoch).count();
     }
 
     // shared pointers
@@ -192,39 +203,32 @@ void UserAccount::remove_password(int p_id)
     }
 }
 
-void UserAccount::modify_password(const int p_id, const std::string new_value, const modifyType modify_type)
+void UserAccount::modify_password(const password *updated_password)
 {
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    if (this->pass_id_map.contains(p_id))
+    if (this->pass_id_map.contains(updated_password->p_id))
     {
-        std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
+        std::shared_ptr<password> password_ptr = this->pass_id_map[updated_password->p_id];
         std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
-        switch (modify_type)
+        if (updated_password->username != DEFAULT_STRING_VAL)
         {
-        case modifyType::MODIFY_DESCRIPTION:
-            password_ptr->description = new_value;
-            break;
-        case modifyType::MODIFY_PASSWORD:
-            password_ptr->encryped_password = new_value;
-            break;
-        default:
-            std::cout << "Password does not exist.";
+            password_ptr->username = updated_password->username;
         }
-    }
-}
+        if (updated_password->encryped_password != DEFAULT_STRING_VAL)
+        {
+            password_ptr->encryped_password = updated_password->encryped_password;
+        }
+        if (updated_password->url != DEFAULT_STRING_VAL)
+        {
+            password_ptr->url = updated_password->url;
+        }
+        if (updated_password->description != DEFAULT_STRING_VAL)
+        {
+            password_ptr->description = updated_password->description;
+        }
 
-std::string UserAccount::view_password(const int p_id)
-{
-    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
-    if (this->pass_id_map.contains(p_id))
-    {
-        std::shared_ptr<password> password_ptr = this->pass_id_map[p_id];
-        std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
-        std::string res = password_ptr->encryped_password;
-
-        return res;
+        password_ptr->date_modified = std::chrono::duration_cast<std::chrono::milliseconds>(this->time_since_epoch).count();
     }
-    return "Err not found";
 }
 
 std::unordered_map<int, password> UserAccount::get_data_copy()

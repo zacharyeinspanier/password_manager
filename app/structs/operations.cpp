@@ -1,11 +1,12 @@
 #include "operations.hpp"
 
-operation &operation::operator=(operation const &other){
+operation &operation::operator=(operation const &other)
+{
 
-    if (&other != this){
+    if (&other != this)
+    {
         operation_type = other.operation_type;
-        modify_type = other.modify_type;
-        new_password = other.new_password;
+        curr_password = other.curr_password;
     }
 
     return *this;

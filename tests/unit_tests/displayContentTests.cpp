@@ -15,7 +15,6 @@ std::string test;
 void test_one()
 {
     // TEST ONE: Add Operation
-    // TODO: !!! operation must be queue for this to work !!!
     std::set<int> new_ids;
     for (int i = 0; i < number_of_passwords; ++i)
     {
@@ -26,9 +25,8 @@ void test_one()
         new_password.encryped_password = "password_" + std::to_string(101 + i);
         new_ids.insert(new_password.p_id);
         passwords_in_db.insert(new_password.p_id);
-        new_operation.modify_type = modifyType::MODIFY_NONE;
         new_operation.operation_type = operationType::ADD;
-        new_operation.new_password = new_password;
+        new_operation.curr_password = new_password;
         test_content->operation_event(new_operation);
     }
 
@@ -62,9 +60,8 @@ void test_two()
         remove_password.encryped_password = "password_" + std::to_string(101 + i);
         remove_ids.insert(101 + i);
         passwords_in_db.erase(remove_password.p_id);
-        remove_operation.modify_type = modifyType::MODIFY_NONE;
         remove_operation.operation_type = operationType::REMOVE;
-        remove_operation.new_password = remove_password;
+        remove_operation.curr_password = remove_password;
         test_content->operation_event(remove_operation);
     }
 
@@ -91,9 +88,8 @@ void test_three()
         operation modify_operation;
         modify_password.username = "test";
         modify_password.description = "new_descrioption_" + std::to_string(item.p_id);
-        modify_operation.modify_type = modifyType::MODIFY_DESCRIPTION;
         modify_operation.operation_type = operationType::MODIFY;
-        modify_operation.new_password = modify_password;
+        modify_operation.curr_password = modify_password;
         test_content->operation_event(modify_operation);
     }
 
@@ -121,9 +117,8 @@ void test_four()
         operation modify_operation;
         modify_password.username = "test";
         modify_password.encryped_password = "new_password_" + std::to_string(item.p_id);
-        modify_operation.modify_type = modifyType::MODIFY_PASSWORD;
         modify_operation.operation_type = operationType::MODIFY;
-        modify_operation.new_password = modify_password;
+        modify_operation.curr_password = modify_password;
         test_content->operation_event(modify_operation);
     }
 
@@ -159,9 +154,8 @@ void test_five()
         add_password.date_modified = time(0);
         passwords_same_url.insert(add_password.p_id);
         passwords_in_db.insert(add_password.p_id);
-        add_operation.modify_type = modifyType::MODIFY_NONE;
         add_operation.operation_type = operationType::ADD;
-        add_operation.new_password = add_password;
+        add_operation.curr_password = add_password;
         test_content->operation_event(add_operation);
     }
 
@@ -198,9 +192,8 @@ void test_six()
     add_password.username = "username_" + std::to_string(6001);
     add_password.encryped_password = "password_" + std::to_string(6001);
     add_password.description = test_desc;
-    add_operation.modify_type = modifyType::MODIFY_NONE;
     add_operation.operation_type = operationType::ADD;
-    add_operation.new_password = add_password;
+    add_operation.curr_password = add_password;
     test_content->operation_event(add_operation);
 
     test_content->search_event(test_desc);

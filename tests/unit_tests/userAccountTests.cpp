@@ -45,7 +45,11 @@ void test_three()
 void test_four()
 {
     // TEST UserAccount::modify_password
-    test_user->modify_password(curr_pass_id, "new description", modifyType::MODIFY_DESCRIPTION);
+    password modify_password;
+    modify_password.p_id = curr_pass_id;
+    modify_password.description = "new description";
+
+    test_user->modify_password(&modify_password);
     std::unordered_map<int, password> test_user_data_copy = test_user->get_data_copy();
     assert(test_user_data_copy.contains(curr_pass_id) == true);
     std::string new_desc = test_user_data_copy.extract(curr_pass_id).mapped().description;
@@ -55,14 +59,16 @@ void test_four()
 void test_five()
 {
     // TEST UserAccount::modify_password
-    test_user->modify_password(curr_pass_id, "new password", modifyType::MODIFY_PASSWORD);
+    password modify_password;
+    modify_password.p_id = curr_pass_id;
+    modify_password.encryped_password = "new password";
+    test_user->modify_password(&modify_password);
     std::unordered_map<int, password> test_user_data_copy = test_user->get_data_copy();
     assert(test_user_data_copy.contains(curr_pass_id) == true);
     std::string new_password = test_user_data_copy.extract(curr_pass_id).mapped().encryped_password;
     assert(new_password == "new password");
     std::cout << "Test Five Pass" << std::endl;
 }
-
 
 void test_seven()
 {
@@ -226,22 +232,23 @@ int main(int argc, char *argv[])
     clean_up_database();
     generate_passwords(number_of_passwords);
 
-
     test_user = new UserAccount(username, user_id, &db_path);
+
     test_one();
     test_two();
     test_three();
     test_four();
     test_five();
-    //test_six();
+    // test_six();
     test_seven();
     test_eight();
     test_nine();
     test_ten();
     test_twelve();
     test_eleven();
-    clean_up_database();
-    
+
     delete test_user;
+    test_user = nullptr;
+    clean_up_database();
     return 0;
 }

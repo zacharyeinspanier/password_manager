@@ -29,10 +29,7 @@ private slots:
 
 private:
     Ui::add_password *ui;
-    std::chrono::system_clock::duration time_since_epoch;
-
     std::function<void(operation)> queue_operation;
-
     void clear_input();
 };
 

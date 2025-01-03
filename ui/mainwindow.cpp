@@ -326,9 +326,7 @@ void MainWindow::on_password_remove_btn_clicked()
 
     operation remove_password;
     remove_password.operation_type = operationType::REMOVE;
-    remove_password.new_password = password;
-    remove_password.modify_type = modifyType::MODIFY_NONE;
-
+    remove_password.curr_password = password;
 
     this->user_content->operation_event(remove_password);
 
