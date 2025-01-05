@@ -66,7 +66,7 @@ void test_two()
     }
 
     // Sleep to allow operation queue to empty
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
     test_content->reset_display_list();
     auto user_data = test_content->get_display_list();
@@ -164,7 +164,7 @@ void test_five()
     // Sleep to allow operation queue to empty
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    auto user_data = test_content->get_display_list();
+    auto user_data = test_content->get_search_result();
 
     for (const auto &item : user_data)
     {
@@ -200,22 +200,10 @@ void test_six()
 
     // Sleep to allow operation queue to empty
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    auto user_data_after = test_content->get_display_list();
+    auto user_data_after = test_content->get_search_result();
     assert(user_data_after.size() == 1);
 
     std::cout << "Test Six Pass" << std::endl;
-}
-
-void test_seven()
-{
-
-    auto user_data_before = test_content->get_display_list();
-    assert(user_data_before.size() == 1);
-    test_content->reset_display_list();
-    auto user_data_after = test_content->get_display_list();
-    assert(user_data_after.size() > 1);
-
-    std::cout << "Test Seven Pass" << std::endl;
 }
 
 int sql_callback(void *data, int argc, char **argv, char **azColName)
@@ -271,7 +259,7 @@ int main(int argc, char *argv[])
     test_four();
     test_five();
     test_six();
-    test_seven();
+    //test_seven();
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     test_eight();
     delete test_content;

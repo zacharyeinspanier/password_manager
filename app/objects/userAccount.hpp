@@ -38,10 +38,9 @@ public:
     void add_password(const password *new_password);
     void remove_password(const int p_id);
     void modify_password(const password *updated_password);
-    void search(std::string search_term, std::set<std::shared_ptr<password>> *search_result);
-
-    bool contains_password(const int p_id);
+    std::unordered_map<int, password> search(std::string search_term);
     std::unordered_map<int, password> get_data_copy();
+    bool contains_password(const int p_id);
     int get_user_id();
 };
 

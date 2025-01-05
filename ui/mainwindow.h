@@ -5,6 +5,7 @@
 #include <QtSql/QSqlDatabase>
 #include "../app/objects/displayContent.hpp"
 #include "./add_password.h"
+#include "./view_password.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -34,7 +35,6 @@ private slots:
 
     void on_password_remove_btn_clicked();
 
-    void on_password_modify_btn_clicked();
 
     void on_password_view_btn_clicked();
 
@@ -42,15 +42,16 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    add_password *password_form;
+    add_password *password_form = nullptr;
+    view_password *view_password_form = nullptr;
+
     QString *db_path;
     QSqlDatabase GetDatabase();
     DisplayContent * user_content;
     std::vector<password> table_display_items;
+
     bool user_loggedin;
     bool search_active;
-
-
     void account_create_and_login_display();
     void user_account_display();
     void login(std::string username, int user_id);

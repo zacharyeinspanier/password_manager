@@ -13,8 +13,7 @@ DisplayContent::DisplayContent(std::string username, int user_id, std::string *d
         std::lock_guard<std::mutex> lock_user_acc(this->user_account_mutex);
         for (const auto &item : this->usr_acc->get_data_copy())
         {
-            std::shared_ptr<password> curr_pass = std::make_shared<password>(item.second);
-            this->display_passwords.insert(curr_pass);
+            this->display_passwords.emplace(item.first, item.second);
         }
     }
 
@@ -45,21 +44,57 @@ void DisplayContent::reset_display_list()
 {
     std::lock_guard<std::mutex> lock_display_passwords(this->display_passwords_mutex);
     std::lock_guard<std::mutex> lock_user_acc(this->user_account_mutex);
-    this->display_passwords.erase(this->display_passwords.begin(), this->display_passwords.end());
-    for (const auto &item : this->usr_acc->get_data_copy())
+
+    auto user_data = this->usr_acc->get_data_copy();
+    for (const auto &item : user_data)
     {
-        std::shared_ptr<password> curr_pass = std::make_shared<password>(item.second);
-        this->display_passwords.insert(curr_pass);
+        if (this->display_passwords.contains(item.first))
+        {
+            this->display_passwords.at(item.first).username = item.second.username;
+            this->display_passwords.at(item.first).encryped_password = item.second.encryped_password;
+            this->display_passwords.at(item.first).url = item.second.url;
+            this->display_passwords.at(item.first).description = item.second.description;
+        }
+        else
+        {
+            this->display_passwords.emplace(item.first, item.second);
+        }
+    }
+
+    for (auto it = this->display_passwords.begin(); it != this->display_passwords.end();)
+    {
+        // Remove the item if user_data no longer contains p_id
+        if (!user_data.contains(it->first))
+        {
+            it = this->display_passwords.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+        
     }
 }
 
 std::vector<password> DisplayContent::get_display_list()
-{
+{ 
     std::lock_guard<std::mutex> lock(this->display_passwords_mutex);
     std::vector<password> res;
-    for (std::set<std::shared_ptr<password>>::iterator curr = this->display_passwords.begin(); curr != this->display_passwords.end(); ++curr)
+    for (auto curr = this->display_passwords.begin(); curr != this->display_passwords.end(); ++curr)
     {
-        password temp = *((*curr).get());
+        password temp = curr->second;
+        res.push_back(temp);
+    }
+
+    return res;
+}
+
+std::vector<password> DisplayContent::get_search_result(){
+    std::lock_guard<std::mutex> lock(this->search_result_mutex);
+    std::vector<password> res;
+    for (auto curr = this->search_result.begin(); curr != this->search_result.end(); ++curr)
+    {
+        password temp = curr->second;
         res.push_back(temp);
     }
 

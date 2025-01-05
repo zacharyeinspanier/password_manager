@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <set>
+#include <map>
 #include <condition_variable>
 #include <thread>
 #include <queue>
@@ -21,7 +22,9 @@ class DisplayContent
 {
 private:
     std::mutex display_passwords_mutex;
-    std::set<std::shared_ptr<password>> display_passwords;
+    std::mutex search_result_mutex;
+    std::map<int, password> search_result;
+    std::map<int, password> display_passwords;
     std::mutex user_account_mutex;
     UserAccount *usr_acc = nullptr;
 
@@ -67,7 +70,6 @@ private:
     void search_bar_process();
 
     void periodic_data_store();
-
     void start_processes();
     void stop_processes();
 
@@ -77,6 +79,7 @@ public:
     ~DisplayContent();
     void reset_display_list();
     std::vector<password> get_display_list();
+    std::vector<password> get_search_result();
     void operation_event(operation &new_operation);
     void search_event(std::string &new_search_term);
 };

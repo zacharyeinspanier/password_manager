@@ -58,6 +58,7 @@
         "__tree": "cpp",
         "set": "cpp",
         "iomanip": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "map": "cpp"
     }
 }

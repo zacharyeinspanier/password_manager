@@ -8,7 +8,6 @@ std::string username = "test_user";
 std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
 UserAccount *test_user = nullptr;
-std::set<std::shared_ptr<password>> search_result;
 
 void test_one()
 {
@@ -86,11 +85,10 @@ void test_seven()
         assert(test_user->contains_password(101 + i) == true);
     }
     std::string search_term = "static_username";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
+    auto search_result = test_user->search(search_term);
     for (const auto &item : search_result)
     {
-        assert(static_username_ids.contains((*item.get()).p_id));
+        assert(static_username_ids.contains(item.first));
     }
     std::cout << "Test Seven Pass" << std::endl;
 }
@@ -111,11 +109,10 @@ void test_eight()
         assert(test_user->contains_password(101 + i) == true);
     }
     std::string search_term = "static_description";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
+    auto search_result = test_user->search(search_term);
     for (const auto &item : search_result)
     {
-        assert(static_description_ids.contains((*item.get()).p_id));
+        assert(static_description_ids.contains(item.first));
     }
     std::cout << "Test Eight Pass" << std::endl;
 }
@@ -137,11 +134,10 @@ void test_nine()
         assert(test_user->contains_password(101 + i) == true);
     }
     std::string search_term = "https//:static_url";
-    search_result.erase(search_result.begin(), search_result.end());
-    test_user->search(search_term, &search_result);
+    auto search_result = test_user->search(search_term);
     for (const auto &item : search_result)
     {
-        assert(static_url_ids.contains((*item.get()).p_id));
+        assert(static_url_ids.contains(item.first));
     }
     std::cout << "Test Nine Pass" << std::endl;
 }
@@ -161,12 +157,11 @@ void test_ten()
         assert(test_user->contains_password(101 + i) == false);
 
         // Ensure the value is erased from the username unordered map
-        search_result.erase(search_result.begin(), search_result.end());
         std::string search_term = "static_username";
-        test_user->search(search_term, &search_result);
+        auto search_result = test_user->search(search_term);
         for (const auto &item : search_result)
         {
-            assert(static_username_ids.contains((*item.get()).p_id));
+            assert(static_username_ids.contains(item.first));
         }
     }
     std::cout << "Test Ten Pass" << std::endl;
@@ -187,12 +182,11 @@ void test_eleven()
         assert(test_user->contains_password(201 + i) == false);
 
         // Ensure the value is erased from the username unordered map
-        search_result.erase(search_result.begin(), search_result.end());
         std::string search_term = "static_description";
-        test_user->search(search_term, &search_result);
+        auto search_result = test_user->search(search_term);
         for (const auto &item : search_result)
         {
-            assert(static_description_ids.contains((*item.get()).p_id));
+            assert(static_description_ids.contains(item.first));
         }
     }
     std::cout << "Test Eleven Pass" << std::endl;
@@ -213,12 +207,11 @@ void test_twelve()
         assert(test_user->contains_password(301 + i) == false);
 
         // Ensure the value is erased from the username unordered map
-        search_result.erase(search_result.begin(), search_result.end());
         std::string search_term = "https//:static_url";
-        test_user->search(search_term, &search_result);
+        auto search_result = test_user->search(search_term);
         for (const auto &item : search_result)
         {
-            assert(static_url_ids.contains((*item.get()).p_id));
+            assert(static_url_ids.contains(item.first));
         }
     }
     std::cout << "Test Twelve Pass" << std::endl;

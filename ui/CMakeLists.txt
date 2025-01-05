@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         add_password.h add_password.cpp add_password.ui
+        view_password.h view_password.cpp view_password.ui
 
     )
 # Define target properties for Android with Qt 6 as:

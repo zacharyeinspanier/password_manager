@@ -293,19 +293,6 @@
      <string>Remove</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="password_modify_btn">
-    <property name="geometry">
-     <rect>
-      <x>390</x>
-      <y>430</y>
-      <width>141</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Modify</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="password_view_btn">
     <property name="geometry">
      <rect>

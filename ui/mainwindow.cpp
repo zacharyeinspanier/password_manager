@@ -20,19 +20,31 @@ void display_message(QString msg, QMessageBox::Icon icon)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
+
+    std::function<void(operation)> queue_operation_callback = [this](operation new_operation) -> void{
+        this->user_content->operation_event(new_operation);
+    };
+    password temp;
+
     ui->setupUi(this);
     user_loggedin = false;
     search_active = false;
     user_content = nullptr;
-    this->account_create_and_login_display();
-    this->password_form = new add_password();
+
+    // Create form objects
+    this->password_form = new add_password(this, queue_operation_callback);
+    this->view_password_form = new view_password(this, temp, queue_operation_callback);
 
     // UI Objects initial state
     this->ui->password_input->setEchoMode(QLineEdit::Password);
-    //TODO:
-    // Table column widths need to be set
-    // this->ui->password_table->
+    this->ui->password_table->setColumnCount(3);
+    this->ui->password_table->setColumnWidth(0, 100);
+    this->ui->password_table->setColumnWidth(1, 200);
+    this->ui->password_table->setColumnWidth(2, 300);
 
+
+    // Set default display
+    this->account_create_and_login_display();
 }
 
 MainWindow::~MainWindow()
@@ -40,7 +52,10 @@ MainWindow::~MainWindow()
     if(this->user_content != nullptr){
         delete this->user_content;
     }
+    delete this->password_form;
+    delete this->view_password_form;
     delete this->ui;
+
 }
 
 void MainWindow::SetDBPath(QString *env_db_path)
@@ -65,7 +80,6 @@ void MainWindow::account_create_and_login_display()
     this->ui->search_input->hide();
     this->ui->password_add_btn->hide();
     this->ui->password_remove_btn->hide();
-    this->ui->password_modify_btn->hide();
     this->ui->password_view_btn->hide();
     this->ui->password_table->hide();
     this->ui->logout_btn->hide();
@@ -79,7 +93,6 @@ void MainWindow::user_account_display()
     this->ui->search_input->clear();
     this->ui->password_add_btn->show();
     this->ui->password_remove_btn->show();
-    this->ui->password_modify_btn->show();
     this->ui->password_view_btn->show();
     this->ui->password_table->show();
     this->ui->logout_btn->show();
@@ -260,6 +273,7 @@ void MainWindow::login(std::string username, int user_id)
     std::string db_path_std_string = this->db_path->toStdString();
     this->user_content = launch_app(username, user_id, &db_path_std_string);
 
+    // TODO: this could be a member?? it will be used in both add password and view password.
     this->password_form->set_callback([this](operation new_operation) -> void{
         this->user_content->operation_event(new_operation);
     });
@@ -286,6 +300,11 @@ void MainWindow::on_search_btn_clicked()
         display_message(warningMsg, QMessageBox::Warning);
         return;
     }
+    // TODO:
+    // 1: check input is not empty
+    // 2: set search acitve
+    // 3: run the search
+    // 4: reset display
 }
 
 void MainWindow::on_logout_btn_clicked()
@@ -334,23 +353,6 @@ void MainWindow::on_password_remove_btn_clicked()
     //5: call reset display
 }
 
-void MainWindow::on_password_modify_btn_clicked()
-{
-    if (this->user_loggedin == false || this->user_content == nullptr)
-    {
-        QString warningMsg = "Error: user is not logged in!!";
-        display_message(warningMsg, QMessageBox::Warning);
-        return;
-    }
-    //TODO:
-    //1: get the item
-    // this->ui->password_table->currentItem();
-    //2: get the create a temporary password
-    //3: create movidy operation
-    //4: call operation event
-    //5: call reset display
-}
-
 void MainWindow::on_password_view_btn_clicked()
 {
     if (this->user_loggedin == false || this->user_content == nullptr)
@@ -378,26 +380,14 @@ void MainWindow::on_password_view_btn_clicked()
 // The search and operations processes will be running and making changes to state.
 // it would be nice to reqularly refresh to get the most up-to-date state
 // maybe every X milliseconds or so... However this will cause many copies of passwords to be created and deleted
+// Thread
 
 
 void MainWindow::on_password_table_cellDoubleClicked(int row, int column)
 {
     //TODO
-    // This will open a dialog box for
-    // 1: viewing the data
-    // 2: modify
-
-    // every time the user double clicks
-    // a new window will open
-
-    // 1: delete the old window if NOT nullptr
-    // 2: construct callback to queue operation
-    // 3: call constructor with copy of password
-
-    // we will have two buttons
-    // 1: show password (when loaded the password will be hid
-
-    QString msg  = "item double clicked";
-    display_message(msg, QMessageBox::Information);
+    this->view_password_form->set_current_password(this->table_display_items[row]);
+    this->view_password_form->load_current_password();
+    this->view_password_form->show();
 }
 

@@ -254,16 +254,16 @@ int UserAccount::get_user_id()
     return this->user_id;
 }
 
-void UserAccount::search(std::string search_term, std::set<std::shared_ptr<password>> *search_result)
+std::unordered_map<int, password> UserAccount::search(std::string search_term)
 {
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+    std::unordered_map<int, password> search_result;
     if (auto search = this->url_map.find(search_term); search != this->url_map.end())
     {
         std::vector<std::shared_ptr<password>> url_search = (*search).second;
         for (int i = 0; i < url_search.size(); ++i)
         {
-            std::shared_ptr<password> password_copy(url_search[i]);
-            search_result->insert(password_copy);
+            search_result.emplace(url_search[i].get()->p_id, *url_search[i].get());
         }
     }
     if (auto search = this->username_map.find(search_term); search != this->username_map.end())
@@ -271,8 +271,7 @@ void UserAccount::search(std::string search_term, std::set<std::shared_ptr<passw
         std::vector<std::shared_ptr<password>> username_search = (*search).second;
         for (int i = 0; i < username_search.size(); ++i)
         {
-            std::shared_ptr<password> password_copy(username_search[i]);
-            search_result->insert(password_copy);
+            search_result.emplace(username_search[i].get()->p_id, *username_search[i].get());
         }
     }
     if (auto search = this->description_map.find(search_term); search != this->description_map.end())
@@ -280,8 +279,8 @@ void UserAccount::search(std::string search_term, std::set<std::shared_ptr<passw
         std::vector<std::shared_ptr<password>> descrioption_search = (*search).second;
         for (int i = 0; i < descrioption_search.size(); ++i)
         {
-            std::shared_ptr<password> password_copy(descrioption_search[i]);
-            search_result->insert(password_copy);
+            search_result.emplace(descrioption_search[i].get()->p_id, *descrioption_search[i].get());
         }
     }
+    return search_result;
 }
