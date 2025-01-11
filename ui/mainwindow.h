@@ -33,31 +33,38 @@ private slots:
 
     void on_password_add_btn_clicked();
 
-    void on_password_remove_btn_clicked();
-
-
-    void on_password_view_btn_clicked();
-
     void on_password_table_cellDoubleClicked(int row, int column);
 
+    void on_cancel_search_btn_clicked();
+
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow *ui = nullptr;
+    DisplayContent * user_content = nullptr;
     add_password *password_form = nullptr;
     view_password *view_password_form = nullptr;
 
-    QString *db_path;
-    QSqlDatabase GetDatabase();
-    DisplayContent * user_content;
-    std::vector<password> table_display_items;
+    std::mutex search_term_mutex; // search term
+    std::mutex table_mutex; // ui table object
+    std::mutex display_items_mutex; // table_display_items vector
+    std::mutex user_content_mutex; // user content object
 
-    bool user_loggedin;
+    std::string search_term;
     bool search_active;
+    std::vector<password> table_display_items;
+    std::thread refresh_display_thread;
+
+    QString *db_path;
+    bool user_loggedin;
+
+    bool exit_refresh_display_thread;
+    std::mutex exit_refresh_display_thread_mtx;
+
     void account_create_and_login_display();
     void user_account_display();
     void login(std::string username, int user_id);
     void logout();
     void update_display_table();
-
-
+    void shutdown_app();
+    QSqlDatabase GetDatabase();
 };
 #endif // MAINWINDOW_H

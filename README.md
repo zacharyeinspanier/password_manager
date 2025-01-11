@@ -9,8 +9,7 @@ To use enviroment variables, an env file must be sourced and the qt_create.app m
 3. run the command `source .env`
 4. change directory to qt folder
     - `cd /Users/$USER/qt`
-5. open qt `open Qt_Creator.app`
-    - Users may need to rename the app `Qt Creator.app` to `Qt_Creator.app`
+5. open qt `open Qt Creator.app`
 
 **NOTE** 
 This project was compiled using `-std=c++20`

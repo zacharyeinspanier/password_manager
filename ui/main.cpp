@@ -40,7 +40,4 @@ int main(int argc, char *argv[])
     w.SetDBPath(&env_db_path);
     w.show();
     return a.exec();
-
-    // When the user successfully loggs in the login objects will be set to hide
-    // and the account display objects will be set to show.
 }

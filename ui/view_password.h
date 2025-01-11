@@ -16,6 +16,7 @@ class view_password : public QDialog
 
 public:
     explicit view_password(QWidget *parent = nullptr, password current_password = {}, std::function<void(operation)> callback = {});
+    void set_callback(std::function<void(operation)> callback);
     void set_current_password(password current_password);
     void load_current_password();
     ~view_password();
@@ -28,6 +29,8 @@ private slots:
     void on_modify_password_btn_clicked();
 
     void on_save_password_btn_clicked();
+
+    void on_password_delete_btn_clicked();
 
 private:
     Ui::view_password *ui;

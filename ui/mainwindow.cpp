@@ -20,10 +20,7 @@ void display_message(QString msg, QMessageBox::Icon icon)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-
-    std::function<void(operation)> queue_operation_callback = [this](operation new_operation) -> void{
-        this->user_content->operation_event(new_operation);
-    };
+    std::function<void(operation)> temp_cb = [](operation temp_operation) ->void{};
     password temp;
 
     ui->setupUi(this);
@@ -32,16 +29,18 @@ MainWindow::MainWindow(QWidget *parent)
     user_content = nullptr;
 
     // Create form objects
-    this->password_form = new add_password(this, queue_operation_callback);
-    this->view_password_form = new view_password(this, temp, queue_operation_callback);
+    this->password_form = new add_password(this, temp_cb);
+    this->view_password_form = new view_password(this, temp, temp_cb);
 
     // UI Objects initial state
     this->ui->password_input->setEchoMode(QLineEdit::Password);
-    this->ui->password_table->setColumnCount(3);
-    this->ui->password_table->setColumnWidth(0, 100);
-    this->ui->password_table->setColumnWidth(1, 200);
-    this->ui->password_table->setColumnWidth(2, 300);
-
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        this->ui->password_table->setColumnCount(3);
+        this->ui->password_table->setColumnWidth(0, 100);
+        this->ui->password_table->setColumnWidth(1, 200);
+        this->ui->password_table->setColumnWidth(2, 300);
+    }
 
     // Set default display
     this->account_create_and_login_display();
@@ -49,13 +48,18 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    if(this->user_content != nullptr){
-        delete this->user_content;
+    this->shutdown_app();
+
+    {
+        std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
+        if(this->user_content != nullptr){
+            delete this->user_content;
+        }
     }
+
     delete this->password_form;
     delete this->view_password_form;
     delete this->ui;
-
 }
 
 void MainWindow::SetDBPath(QString *env_db_path)
@@ -77,11 +81,16 @@ void MainWindow::account_create_and_login_display()
 
     // UI object to hide
     this->ui->search_btn->hide();
+    this->ui->cancel_search_btn->hide();
+    this->ui->cancel_search_btn->setEnabled(false);
     this->ui->search_input->hide();
     this->ui->password_add_btn->hide();
-    this->ui->password_remove_btn->hide();
-    this->ui->password_view_btn->hide();
-    this->ui->password_table->hide();
+    // TODO need lock here
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        this->ui->password_table->hide();
+    }
+
     this->ui->logout_btn->hide();
 }
 
@@ -92,9 +101,10 @@ void MainWindow::user_account_display()
     this->ui->search_input->show();
     this->ui->search_input->clear();
     this->ui->password_add_btn->show();
-    this->ui->password_remove_btn->show();
-    this->ui->password_view_btn->show();
-    this->ui->password_table->show();
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        this->ui->password_table->show();
+    }
     this->ui->logout_btn->show();
 
     // UI object to hide
@@ -104,6 +114,8 @@ void MainWindow::user_account_display()
     this->ui->username_input->hide();
     this->ui->password_label->hide();
     this->ui->username_label->hide();
+    this->ui->cancel_search_btn->hide();
+    this->ui->cancel_search_btn->setEnabled(false);
 }
 
 QSqlDatabase MainWindow::GetDatabase()
@@ -232,31 +244,32 @@ void MainWindow::on_login_btn_clicked()
 
 void MainWindow::update_display_table()
 {
+    // sleep 3 s
 
-    // search_active
-    // the user completes a search, the table should be updated to match their search
-    // user will need to remove their search in-order to display full list of passwords
-    if(!this->search_active){
-        this->user_content->reset_display_list();
+    // aquire display passwords lock
+    // aquire search term lock
+    // aquire user content lock
+
+    if(this->search_active){
+        this->user_content->search_event(this->search_term);
     }else{
-        // TODO:
-        // Re-run search to get most up-to-date search results
+        this->user_content->reset_display_list();
     }
-
-    // TODO: here we are clearing passwords and re-writing to table_display_items.
-    // This will happen every time update_display_table is called.
-    // When complete, this will happen every time the user interacts with the app.
-    // TO improve space complexity, find a way to preserve data..?
-
-    // Maybe return shared pointers rather than complete copies??
-    // std::vector<shared_ptr<password> >
-    // this will not work since it will be without the mutex.
-    // probably not a good idea
-
+    // release search term lock
     this->table_display_items.clear();
-    this->table_display_items = this->user_content->get_display_list();
+
+    if(this->search_active){
+        this->table_display_items = this->user_content->get_search_result();
+    }
+    else{
+        this->table_display_items = this->user_content->get_display_list();
+    }
+    // release user content lock
+    // release search term lock
 
 
+
+    // aquire table lock
     this->ui->password_table->clearContents();
     this->ui->password_table->setRowCount(this->table_display_items.size());
 
@@ -265,51 +278,138 @@ void MainWindow::update_display_table()
         this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].url)));
         this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].description)));
     }
+    // release table lock
+    // release display passwords lock
 
 }
 
 void MainWindow::login(std::string username, int user_id)
 {
     std::string db_path_std_string = this->db_path->toStdString();
-    this->user_content = launch_app(username, user_id, &db_path_std_string);
 
-    // TODO: this could be a member?? it will be used in both add password and view password.
-    this->password_form->set_callback([this](operation new_operation) -> void{
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        this->ui->password_table->clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> display_items_lock(this->display_items_mutex);
+        this->table_display_items.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> search_term_lock(this->search_term_mutex);
+        this->search_term = "";
+        this->search_active = false;
+    }
+
+    {
+        std::lock_guard<std::mutex> exit_refresh_thread_lock(this->exit_refresh_display_thread_mtx);
+        this->exit_refresh_display_thread = false;
+    }
+
+    {
+        std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
+        this->user_content = launch_app(username, user_id, &db_path_std_string);
+    }
+
+
+    std::function<void(operation)> queue_operation_callback = [this](operation new_operation) -> void{
+        std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
         this->user_content->operation_event(new_operation);
-    });
+    };
 
+    this->view_password_form->set_callback(queue_operation_callback);
+    this->password_form->set_callback(queue_operation_callback);
     this->user_loggedin = true;
     this->user_account_display();
+
+    // TODO: Here the Thread will be launched
     this->update_display_table();
 }
 
 void MainWindow::logout()
 {
-    this->password_form->set_callback([](operation new_operation) -> void {});
-    delete this->user_content;
-    this->user_content = nullptr;
+    // Command refresh thread to exit
+    {
+        std::lock_guard<std::mutex> exit_refresh_thread_lock(this->exit_refresh_display_thread_mtx);
+        this->exit_refresh_display_thread = true;
+    }
+    this->refresh_display_thread.join();
+
+    // Clear display table
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        this->ui->password_table->clear();
+    }
+
+    // Clear display items vector
+    {
+        std::lock_guard<std::mutex> display_items_lock(this->display_items_mutex);
+        this->table_display_items.clear();
+    }
+
+    // Reset search term
+    {
+        std::lock_guard<std::mutex> search_term_lock(this->search_term_mutex);
+        this->search_term = "";
+        this->search_active = false;
+    }
+
+
+    std::function<void(operation)> temp_cb = [](operation new_operation) -> void {};
+    this->view_password_form->set_callback(temp_cb);
+    this->password_form->set_callback(temp_cb);
+
+    // Delete user content
+    {
+        std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
+        delete this->user_content;
+        this->user_content = nullptr;
+    }
+
     this->user_loggedin = false;
     this->account_create_and_login_display();
 }
 
 void MainWindow::on_search_btn_clicked()
 {
-    if (this->user_loggedin == false || this->user_content == nullptr)
+    if (this->user_loggedin == false)
     {
         QString warningMsg = "Error: user is not logged in!!";
         display_message(warningMsg, QMessageBox::Warning);
         return;
     }
-    // TODO:
-    // 1: check input is not empty
-    // 2: set search acitve
-    // 3: run the search
-    // 4: reset display
+
+    std::lock_guard<std::mutex> search_term_lock(this->search_term_mutex);
+    this->search_term = this->ui->search_input->text().toStdString();
+    this->search_active = true;
+
+    this->ui->search_btn->hide();
+    this->ui->search_btn->setEnabled(false);
+
+    this->ui->cancel_search_btn->show();
+    this->ui->cancel_search_btn->setEnabled(true);
+}
+
+
+void MainWindow::on_cancel_search_btn_clicked()
+{
+    std::lock_guard<std::mutex> search_term_lock(this->search_term_mutex);
+    this->search_term = "";
+    this->search_active = false;
+    this->ui->search_input->setText("");
+
+    this->ui->cancel_search_btn->show();
+    this->ui->cancel_search_btn->setEnabled(false);
+
+    this->ui->search_btn->show();
+    this->ui->search_btn->setEnabled(true);
 }
 
 void MainWindow::on_logout_btn_clicked()
 {
-    if (this->user_loggedin == false || this->user_content == nullptr)
+    if (this->user_loggedin == false)
     {
         QString warningMsg = "Error: user is not logged in!!";
         display_message(warningMsg, QMessageBox::Warning);
@@ -320,7 +420,7 @@ void MainWindow::on_logout_btn_clicked()
 
 void MainWindow::on_password_add_btn_clicked()
 {
-    if (this->user_loggedin == false || this->user_content == nullptr)
+    if (this->user_loggedin == false)
     {
         QString warningMsg = "Error: user is not logged in!!";
         display_message(warningMsg, QMessageBox::Warning);
@@ -330,64 +430,27 @@ void MainWindow::on_password_add_btn_clicked()
     this->password_form->show();
 }
 
-void MainWindow::on_password_remove_btn_clicked()
-{
-    if (this->user_loggedin == false || this->user_content == nullptr)
-    {
-        QString warningMsg = "Error: user is not logged in!!";
-        display_message(warningMsg, QMessageBox::Warning);
-        return;
-    }
-
-    auto table_item = this->ui->password_table->currentItem();
-    password password = this->table_display_items[table_item->row()];
-
-
-    operation remove_password;
-    remove_password.operation_type = operationType::REMOVE;
-    remove_password.curr_password = password;
-
-    this->user_content->operation_event(remove_password);
-
-    //TODO:
-    //5: call reset display
-}
-
-void MainWindow::on_password_view_btn_clicked()
-{
-    if (this->user_loggedin == false || this->user_content == nullptr)
-    {
-        QString warningMsg = "Error: user is not logged in!!";
-        display_message(warningMsg, QMessageBox::Warning);
-        return;
-    }
-
-    this->user_content->reset_display_list();
-    this->update_display_table();
-
-    // TODO:
-    //1: get the item
-    // this->ui->password_table->currentItem();
-    //2: get the create a temporary password
-    //3: create movidy operation
-    //4: call operation event
-    //5: display password is a qt box widget
-        // unsure how the password will be set to ui...
-}
-
-//TODO:
-// I need a mechanism that will call reset_display_list() and get_display_list()
-// The search and operations processes will be running and making changes to state.
-// it would be nice to reqularly refresh to get the most up-to-date state
-// maybe every X milliseconds or so... However this will cause many copies of passwords to be created and deleted
-// Thread
-
 
 void MainWindow::on_password_table_cellDoubleClicked(int row, int column)
 {
-    //TODO
-    this->view_password_form->set_current_password(this->table_display_items[row]);
+    {
+        std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
+        std::lock_guard<std::mutex> display_items_lock(this->display_items_mutex);
+        this->view_password_form->set_current_password(this->table_display_items[row]);
+    }
     this->view_password_form->load_current_password();
     this->view_password_form->show();
 }
+
+void MainWindow::shutdown_app(){
+    {
+        std::lock_guard<std::mutex> exit_refresh_display_thread_lock(this->exit_refresh_display_thread_mtx);
+        this->exit_refresh_display_thread = true;
+    }
+
+    // TODO: check that thread is running, Calling join on empty thread have problems.
+    this->refresh_display_thread.join();
+}
+
+
 

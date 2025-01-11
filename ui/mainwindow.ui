@@ -270,7 +270,7 @@
    <widget class="QPushButton" name="password_add_btn">
     <property name="geometry">
      <rect>
-      <x>110</x>
+      <x>70</x>
       <y>430</y>
       <width>141</width>
       <height>41</height>
@@ -278,32 +278,6 @@
     </property>
     <property name="text">
      <string>Add</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="password_remove_btn">
-    <property name="geometry">
-     <rect>
-      <x>250</x>
-      <y>430</y>
-      <width>141</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Remove</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="password_view_btn">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>430</y>
-      <width>141</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>View</string>
     </property>
    </widget>
    <widget class="QPushButton" name="logout_btn">
@@ -319,6 +293,31 @@
      <string>Logout</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="cancel_search_btn">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>40</y>
+      <width>141</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Cancel</string>
+    </property>
+   </widget>
+   <zorder>cancel_search_btn</zorder>
+   <zorder>login_btn</zorder>
+   <zorder>create_acc_btn</zorder>
+   <zorder>username_input</zorder>
+   <zorder>password_input</zorder>
+   <zorder>username_label</zorder>
+   <zorder>password_label</zorder>
+   <zorder>search_input</zorder>
+   <zorder>search_btn</zorder>
+   <zorder>password_table</zorder>
+   <zorder>password_add_btn</zorder>
+   <zorder>logout_btn</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
