@@ -1,8 +1,0 @@
-Currently: 01/11/2025
-
-I am making a thread to update the display list. 
-    DONE 1: Insert locks surrounding shared object with in main and refresh thread
-    2: Create thread loop with locks and refresh display list
-    3: Start and end thread. When will the thread be launched? When will the thread be commanded to exit and call join?
-        - Login: launch thread, after the user content is created
-        - Logout: exit thread, before user content is deconstructed

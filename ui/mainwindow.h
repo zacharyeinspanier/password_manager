@@ -64,7 +64,7 @@ private:
     void login(std::string username, int user_id);
     void logout();
     void update_display_table();
-    void shutdown_app();
+    void join_refresh_thread();
     QSqlDatabase GetDatabase();
 };
 #endif // MAINWINDOW_H

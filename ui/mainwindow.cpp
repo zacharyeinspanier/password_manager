@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
         this->ui->password_table->setColumnWidth(0, 100);
         this->ui->password_table->setColumnWidth(1, 200);
         this->ui->password_table->setColumnWidth(2, 300);
+        this->ui->password_table->setHorizontalHeaderItem(0, new QTableWidgetItem("username"));
+        this->ui->password_table->setHorizontalHeaderItem(1, new QTableWidgetItem("url"));
+        this->ui->password_table->setHorizontalHeaderItem(2, new QTableWidgetItem("description"));
     }
 
     // Set default display
@@ -48,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    this->shutdown_app();
+    this->join_refresh_thread();
 
     {
         std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
@@ -85,7 +88,6 @@ void MainWindow::account_create_and_login_display()
     this->ui->cancel_search_btn->setEnabled(false);
     this->ui->search_input->hide();
     this->ui->password_add_btn->hide();
-    // TODO need lock here
     {
         std::lock_guard<std::mutex> ui_table_lock(this->table_mutex);
         this->ui->password_table->hide();
@@ -244,43 +246,56 @@ void MainWindow::on_login_btn_clicked()
 
 void MainWindow::update_display_table()
 {
-    // sleep 3 s
+    std::unique_lock<std::mutex> display_items_lock (this->display_items_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> search_term_lock (this->search_term_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> table_lock (this->table_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> user_content_lock (this->user_content_mutex, std::defer_lock);
+    std::unique_lock<std::mutex> exit_loop_lock (this->exit_refresh_display_thread_mtx, std::defer_lock);
 
-    // aquire display passwords lock
-    // aquire search term lock
-    // aquire user content lock
 
-    if(this->search_active){
-        this->user_content->search_event(this->search_term);
-    }else{
-        this->user_content->reset_display_list();
+    while(true){
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+        display_items_lock.lock();
+        search_term_lock.lock();
+        user_content_lock.lock();
+
+        if(this->search_active){
+            this->user_content->search_event(this->search_term);
+            this->table_display_items.clear();
+            this->table_display_items = this->user_content->get_search_result();
+        }else{
+            this->user_content->reset_display_list();
+            this->table_display_items.clear();
+            this->table_display_items = this->user_content->get_display_list();
+        }
+
+        user_content_lock.unlock();
+        search_term_lock.unlock();
+
+        table_lock.lock();
+        this->ui->password_table->setRowCount(0);
+        this->ui->password_table->setRowCount(this->table_display_items.size());
+        this->ui->password_table->setHorizontalHeaderItem(0, new QTableWidgetItem("Username"));
+        this->ui->password_table->setHorizontalHeaderItem(1, new QTableWidgetItem("URL"));
+        this->ui->password_table->setHorizontalHeaderItem(2, new QTableWidgetItem("Description"));
+
+        for(int i = 0; i < this->table_display_items.size(); ++i){
+            this->ui->password_table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].username)));
+            this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].url)));
+            this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].description)));
+        }
+        table_lock.unlock();
+        display_items_lock.unlock();
+
+        // Exit condition
+        exit_loop_lock.lock();
+        if(this->exit_refresh_display_thread){
+            exit_loop_lock.unlock();
+            break;
+        }
+        exit_loop_lock.unlock();
     }
-    // release search term lock
-    this->table_display_items.clear();
-
-    if(this->search_active){
-        this->table_display_items = this->user_content->get_search_result();
-    }
-    else{
-        this->table_display_items = this->user_content->get_display_list();
-    }
-    // release user content lock
-    // release search term lock
-
-
-
-    // aquire table lock
-    this->ui->password_table->clearContents();
-    this->ui->password_table->setRowCount(this->table_display_items.size());
-
-    for(int i = 0; i < this->table_display_items.size(); ++i){
-        this->ui->password_table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].username)));
-        this->ui->password_table->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].url)));
-        this->ui->password_table->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(this->table_display_items[i].description)));
-    }
-    // release table lock
-    // release display passwords lock
-
 }
 
 void MainWindow::login(std::string username, int user_id)
@@ -324,18 +339,13 @@ void MainWindow::login(std::string username, int user_id)
     this->user_loggedin = true;
     this->user_account_display();
 
-    // TODO: Here the Thread will be launched
-    this->update_display_table();
+    this->refresh_display_thread = std::thread(&MainWindow::update_display_table, this);
 }
 
 void MainWindow::logout()
 {
     // Command refresh thread to exit
-    {
-        std::lock_guard<std::mutex> exit_refresh_thread_lock(this->exit_refresh_display_thread_mtx);
-        this->exit_refresh_display_thread = true;
-    }
-    this->refresh_display_thread.join();
+    this->join_refresh_thread();
 
     // Clear display table
     {
@@ -442,14 +452,15 @@ void MainWindow::on_password_table_cellDoubleClicked(int row, int column)
     this->view_password_form->show();
 }
 
-void MainWindow::shutdown_app(){
+void MainWindow::join_refresh_thread(){
     {
         std::lock_guard<std::mutex> exit_refresh_display_thread_lock(this->exit_refresh_display_thread_mtx);
         this->exit_refresh_display_thread = true;
     }
 
-    // TODO: check that thread is running, Calling join on empty thread have problems.
-    this->refresh_display_thread.join();
+    if(this->refresh_display_thread.joinable()){
+        this->refresh_display_thread.join();
+    }
 }
 
 
