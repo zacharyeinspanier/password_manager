@@ -21,7 +21,10 @@ UserAccount::UserAccount(const std::string username, const int user_id, std::str
     }
 }
 
-UserAccount::~UserAccount() {}
+UserAccount::~UserAccount() {
+    // TODO: could this cause problems? 
+    UserAccount::initial_user_data.clear();
+}
 
 int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
 {
@@ -147,8 +150,14 @@ void UserAccount::remove_password(int p_id)
 {
 
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+
     if (this->pass_id_map.contains(p_id))
     {
+        {
+            std::lock_guard<std::mutex> removed_ids_lock(this->removed_ids_mutex);
+            this->removed_ids.push_back(p_id);
+        }
+
         // extract key/value pair from map
         auto node_handle = this->pass_id_map.extract(p_id);
         std::shared_ptr<password> removed_password = node_handle.mapped();
@@ -283,4 +292,11 @@ std::unordered_map<int, password> UserAccount::search(std::string search_term)
         }
     }
     return search_result;
+}
+
+std::vector<int> UserAccount::get_removed_ids(){
+    std::lock_guard<std::mutex> removed_ids_lock(this->removed_ids_mutex);
+    std::vector<int> removed_ids_copy = this->removed_ids;
+    this->removed_ids.clear();
+    return removed_ids_copy;
 }

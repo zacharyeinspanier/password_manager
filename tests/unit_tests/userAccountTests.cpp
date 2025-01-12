@@ -232,7 +232,6 @@ int main(int argc, char *argv[])
     test_three();
     test_four();
     test_five();
-    // test_six();
     test_seven();
     test_eight();
     test_nine();

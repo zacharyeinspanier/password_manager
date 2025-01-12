@@ -28,8 +28,8 @@ void DisplayContent::periodic_data_store()
         data_store_exit_lock.unlock();
 
         std::unordered_map<int, password> user_data_copy;
-        user_account_lock.lock();
         // !!CRITICAL CODE!! //
+        user_account_lock.lock();
         user_data_copy = this->usr_acc->get_data_copy();
         user_account_lock.unlock();
 
@@ -58,6 +58,31 @@ void DisplayContent::periodic_data_store()
             int rc_exec;
             char *messaggeError;
             rc_exec = sqlite3_exec(db, sql_insert, NULL, 0, &messaggeError);
+            if (rc_exec != SQLITE_OK)
+            {
+                std::cerr << "Error Insert data store" << std::endl;
+                std::cout << messaggeError << std::endl;
+                sqlite3_free(messaggeError);
+            }
+        }
+
+        // DELETE old Items
+        user_account_lock.lock();
+        std::vector<int> removed_ids = this->usr_acc->get_removed_ids();
+        user_account_lock.unlock();
+
+        for(int i = 0; i < removed_ids.size(); ++i){
+            char sql_remove[200];
+            snprintf(
+                sql_remove,
+                sizeof(sql_remove),
+                "DELETE FROM USER_DATA WHERE USERID = %s AND PASSWORD_ID = %s;",
+                std::to_string(user_id).c_str(),
+                std::to_string(removed_ids[i]).c_str()   
+            );
+            int rc_exec;
+            char *messaggeError;
+            rc_exec = sqlite3_exec(db, sql_remove, NULL, 0, &messaggeError);
             if (rc_exec != SQLITE_OK)
             {
                 std::cerr << "Error Insert data store" << std::endl;

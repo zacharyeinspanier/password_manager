@@ -218,10 +218,8 @@ void MainWindow::on_login_btn_clicked()
         {
             QSqlRecord rec = userAuthenticateQuery.record();
             int username_index = rec.indexOf("USERNAME");
-            int password_index = rec.indexOf("PASSWORD");
             int userid_index = rec.indexOf("USERID");
             QString username_query = userAuthenticateQuery.value(username_index).toString();
-            QString password_query = userAuthenticateQuery.value(password_index).toString();
             int userid_query = userAuthenticateQuery.value(userid_index).toInt();
 
             this->login(username_query.toStdString(), userid_query);

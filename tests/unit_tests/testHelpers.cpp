@@ -70,8 +70,7 @@ void clean_up_database()
     }
 
     char sql_delete[500];
-    snprintf(sql_delete, sizeof(sql_delete), "DELETE FROM USER_DATA WHERE USERID = %s;", std::to_string(user_id).c_str());
-    //snprintf(sql_delete, sizeof(sql_delete), "DELETE FROM USER_DATA WHERE USERID = 2;");
+    snprintf(sql_delete, sizeof(sql_delete), "DELETE FROM USER_DATA WHERE USERID='%s';", std::to_string(user_id).c_str());
     int rc_exec;
     char *messaggeError;
     rc_exec = sqlite3_exec(db, sql_delete, NULL, 0, &messaggeError);

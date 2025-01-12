@@ -21,8 +21,10 @@ private:
     std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> url_map;
     std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> username_map;
     std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> description_map;
+    std::vector<int> removed_ids;
     std::chrono::system_clock::duration time_since_epoch;
     std::mutex unordered_map_mutex;
+    std::mutex removed_ids_mutex;
     std::string account_username;
     std::string db_path;
     int user_id;
@@ -40,6 +42,7 @@ public:
     void modify_password(const password *updated_password);
     std::unordered_map<int, password> search(std::string search_term);
     std::unordered_map<int, password> get_data_copy();
+    std::vector<int> get_removed_ids();
     bool contains_password(const int p_id);
     int get_user_id();
 };
