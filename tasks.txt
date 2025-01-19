@@ -1,0 +1,7 @@
+1: It is allowed to create a user account with empty feilds. Perform input parsing when creating an account to ensure:
+    a: the username is unique
+    b: the feilds are not empty
+
+2: Write encripy and decrypt algorithm. 
+    a: the passwords should be stored in DB as encrypted
+    b: passwords are only decripted when user requests to view the password. 

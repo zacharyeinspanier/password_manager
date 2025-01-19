@@ -3,6 +3,7 @@
 
 std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
+int UserAccount::max_password_id = 0;
 
 int number_of_passwords = 10;
 int curr_pass_id = 0;

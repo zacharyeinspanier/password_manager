@@ -8,6 +8,7 @@ std::string username = "test_user";
 std::mutex UserAccount::user_data_mutex;
 std::vector<password> UserAccount::initial_user_data;
 UserAccount *test_user = nullptr;
+int UserAccount::max_password_id = 0;
 
 void test_one()
 {

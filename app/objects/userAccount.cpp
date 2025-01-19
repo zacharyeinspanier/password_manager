@@ -11,7 +11,8 @@ UserAccount::UserAccount(const std::string username, const int user_id, std::str
     this->current_password_id = 0;
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     this->time_since_epoch = now.time_since_epoch();
-
+    this->get_password_id();
+    this->current_password_id = std::max(10, UserAccount::max_password_id);
     this->get_user_data();
 
     for (int i = 0; i < UserAccount::initial_user_data.size(); ++i)
@@ -26,11 +27,44 @@ UserAccount::~UserAccount() {
     UserAccount::initial_user_data.clear();
 }
 
-int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColName)
+int UserAccount::sql_callback_password_id(void *data, int argc, char **argv, char **azColName){
+
+    std::lock_guard<std::mutex> user_data_lock(UserAccount::user_data_mutex);
+    std::string p_id_string = argv[6];
+    int curr_p_id = stoi(p_id_string);
+    UserAccount::max_password_id = std::max(UserAccount::max_password_id, curr_p_id);
+    return 0;
+}
+
+void UserAccount::get_password_id(){
+    sqlite3 *db;
+    int rc;
+    const char *path = &this->db_path[0];
+    rc = sqlite3_open(path, &db);
+
+    if (rc != SQLITE_OK)
+    {
+        // TODO: error handeling
+        std::cerr << "Error Insert get user data" << std::endl;
+    }
+    else
+    {
+        std::string sql = "SELECT * FROM USER_DATA;";
+        std::string data = "CALLBACK FUNCTION";
+        int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback_password_id, (void *)data.c_str(), NULL);
+
+        if (rc_exec != SQLITE_OK)
+        {
+            std::cerr << "Error Select" << std::endl;
+        }
+    }
+}
+
+int UserAccount::sql_callback_user_data(void *data, int argc, char **argv, char **azColName)
 {
     // This callback is invoked each time the SELECT query finds a matching row.
     // This callback is used to store user data as a password, and insert the password into initial_user_data
-    std::lock_guard<std::mutex> user_data_mutex(UserAccount::user_data_mutex);
+    std::lock_guard<std::mutex> user_data_lock(UserAccount::user_data_mutex);
     password curr_password;
     curr_password.username = argv[0];
     curr_password.encryped_password = argv[1];
@@ -50,7 +84,6 @@ int UserAccount::sql_callback(void *data, int argc, char **argv, char **azColNam
 
 void UserAccount::get_user_data()
 {
-
     sqlite3 *db;
     int rc;
     const char *path = &this->db_path[0];
@@ -65,7 +98,7 @@ void UserAccount::get_user_data()
     {
         std::string sql = "SELECT * FROM USER_DATA WHERE USERID =" + std::to_string(this->user_id) + ";";
         std::string data = "CALLBACK FUNCTION";
-        int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback, (void *)data.c_str(), NULL);
+        int rc_exec = sqlite3_exec(db, sql.c_str(), UserAccount::sql_callback_user_data, (void *)data.c_str(), NULL);
 
         if (rc_exec != SQLITE_OK)
         {

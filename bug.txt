@@ -1,4 +1,0 @@
-When passwords are inserted into the SQL data case 'INSERT OR REPLACE' is used. If the password_id is not unique, the 
-entry will be replace with the new values. Thus data is lost. 
-
-Task: create a way to ensure that password_id is always unique. 

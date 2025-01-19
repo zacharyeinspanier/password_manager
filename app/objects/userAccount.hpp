@@ -17,6 +17,7 @@ class UserAccount
 private:
     static std::mutex user_data_mutex;
     static std::vector<password> initial_user_data;
+    static int max_password_id;
     std::unordered_map<int, std::shared_ptr<password>> pass_id_map;
     std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> url_map;
     std::unordered_map<std::string, std::vector<std::shared_ptr<password>>> username_map;
@@ -31,7 +32,9 @@ private:
     int current_password_id;
 
     void get_user_data();
-    static int sql_callback(void *data, int argc, char **argv, char **azColName);
+    void get_password_id();
+    static int sql_callback_user_data(void *data, int argc, char **argv, char **azColName);
+    static int sql_callback_password_id(void *data, int argc, char **argv, char **azColName);
 
 public:
     UserAccount(std::string const username, const int user_id, std::string *db_path);
