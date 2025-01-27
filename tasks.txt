@@ -2,6 +2,13 @@
     a: the username is unique
     b: the feilds are not empty
 
-2: Write encripy and decrypt algorithm. 
+2: Write encrypt and decrypt algorithm. 
     a: the passwords should be stored in DB as encrypted
     b: passwords are only decripted when user requests to view the password. 
+
+3: SQL injection is possible when during login and saving data.
+    a: clean all user input before using it. ensure it is save for SQL statements
+
+4: The search algorithm could be improved to find similar matches
+    a: change search to find similar values
+
