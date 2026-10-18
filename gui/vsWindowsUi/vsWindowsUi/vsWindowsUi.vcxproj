@@ -153,6 +153,9 @@
     <ClInclude Include="PasswordForm.h" />
     <ClInclude Include="PasswordGrid.h" />
     <ClInclude Include="ViewPasswordDialog.h" />
+    <ClInclude Include="AccountStore.h" />
+    <ClInclude Include="CreateAccountDialog.h" />
+    <ClInclude Include="LoginPage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vsWindowsUi.cpp" />
@@ -160,6 +163,9 @@
     <ClCompile Include="PasswordForm.cpp" />
     <ClCompile Include="PasswordGrid.cpp" />
     <ClCompile Include="ViewPasswordDialog.cpp" />
+    <ClCompile Include="AccountStore.cpp" />
+    <ClCompile Include="CreateAccountDialog.cpp" />
+    <ClCompile Include="LoginPage.cpp" />
     <!-- Core app: app.cpp #includes the rest of app\ as a single translation unit. -->
     <ClCompile Include="..\..\..\app\app.cpp" />
     <!-- SQLite amalgamation, compiled as C with warnings off (third-party code). -->
