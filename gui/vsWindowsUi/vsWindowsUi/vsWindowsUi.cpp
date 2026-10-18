@@ -1,9 +1,19 @@
 // vsWindowsUi.cpp : Defines the entry point for the application.
 //
+// The main window has two pages:
+//   Login page          - shown first. Username, Password, Login, Create Account.
+//   Password manager    - shown after a successful login. Add Password, search, password grid,
+//                         status line and Logout (bottom right).
+//
+// A user session (the core's DisplayContent: threads, state, database) only exists while the
+// password manager page is shown. Logout ends the session and returns to the login page.
 
 #include "framework.h"
 #include "vsWindowsUi.h"
+#include "AccountStore.h"
 #include "AddPasswordDialog.h"
+#include "CreateAccountDialog.h"
+#include "LoginPage.h"
 #include "PasswordGrid.h"
 #include "StringConvert.h"
 #include "ViewPasswordDialog.h"
@@ -31,32 +41,35 @@ static constexpr UINT kRefreshIntervalMs = 1000;
 static constexpr UINT kRefreshSoonMs = 150;
 static constexpr UINT kSearchDebounceMs = 250;
 
-// Layout (pixels).
+// Layout of the password manager page (pixels).
 static constexpr int kMargin = 16;
 static constexpr int kButtonWidth = 140;
 static constexpr int kButtonHeight = 32;
 static constexpr int kSearchHeight = 26;
 static constexpr int kClearButtonWidth = 70;
-static constexpr int kStatusHeight = 20;
+static constexpr int kLogoutButtonWidth = 100;
 
-// ---------------------------------------------------------------------------------------------
-// Temporary development session.
-// TODO: replace with a login screen (port of MainWindow::on_login_btn_clicked) that looks the
-// user up in the ACCOUNTS table. Until then the app opens this existing account.
-// ---------------------------------------------------------------------------------------------
-static const std::string kDevUsername = "temp";
-static constexpr int kDevUserId = 14;
+// Controls that belong to the password manager page (the grid is handled separately).
+static constexpr int kMainPageControlIds[] = {
+    IDC_ADD_PASSWORD_BTN, IDC_SEARCH_BOX, IDC_SEARCH_CLEAR_BTN, IDC_SESSION_STATUS, IDC_LOGOUT_BTN,
+};
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
-std::unique_ptr<DisplayContent> g_userContent;  // core app: threads, state, database
+std::filesystem::path g_dbPath;                 // user_accounts.db (empty if not found)
+std::string g_dbPathUtf8;                       // same, as UTF-8 for SQLite and the core
+
+std::unique_ptr<DisplayContent> g_userContent;  // core app for the logged-in user (null when logged out)
+std::wstring g_signedInUser;
 std::wstring g_sessionStatus;                   // shown in the status line at the bottom
 HFONT g_uiFont = nullptr;
+HFONT g_titleFont = nullptr;
 PasswordGrid g_passwordGrid;                    // grid of saved passwords
 HWND g_mainWindow = nullptr;
+HWND g_lastFocus = nullptr;                     // restored when the window is re-activated
 
 // Search state. Empty term = show every password.
 std::wstring g_searchText;                      // what the grid is currently filtered by
@@ -115,43 +128,33 @@ static std::filesystem::path FindDatabasePath()
     return fs::path();
 }
 
-//
-//  FUNCTION: StartUserSession()
-//
-//  PURPOSE: Creates the core DisplayContent object, which loads the user's passwords and starts
-//           the operation, search, and data-store threads.
-//
-static void StartUserSession()
-{
-    std::filesystem::path dbPath = FindDatabasePath();
-    if (dbPath.empty())
-    {
-        g_sessionStatus = L"Database not found. Set DB_PATH or keep db\\user_accounts.db in the repo.";
-        return;
-    }
-
-    std::string dbPathUtf8 = WideToUtf8(dbPath.wstring()); // sqlite3_open expects UTF-8
-    g_userContent = std::make_unique<DisplayContent>(kDevUsername, kDevUserId, &dbPathUtf8);
-    g_sessionStatus = L"Signed in as \"" + Utf8ToWide(kDevUsername) + L"\"   |   " + dbPath.wstring();
-}
-
-static HFONT CreateUiFont()
+static HFONT CreateUiFont(int heightScalePercent = 100, int weight = 0)
 {
     NONCLIENTMETRICSW metrics = {};
     metrics.cbSize = sizeof(metrics);
-    if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
+    if (!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0))
     {
-        return CreateFontIndirectW(&metrics.lfMessageFont);
+        return nullptr;
     }
-    return nullptr;
+    LOGFONTW font = metrics.lfMessageFont;
+    font.lfHeight = font.lfHeight * heightScalePercent / 100;
+    if (weight != 0)
+    {
+        font.lfWeight = weight;
+    }
+    return CreateFontIndirectW(&font);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Password manager page
+// ---------------------------------------------------------------------------------------------
 
 static bool SearchActive()
 {
     return !g_searchTermUtf8.empty();
 }
 
-// Status line: session info normally, match count while searching.
+// Status line: who is signed in normally, match count while searching.
 static void UpdateStatusText()
 {
     std::wstring text = g_sessionStatus;
@@ -189,7 +192,7 @@ static void RefreshPasswordGrid()
     UpdateStatusText();
 }
 
-// Applies whatever is in the search box (called after the user pauses typing).
+// Applies whatever is in the search box (called after the user pauses typing, or on Enter).
 static void ApplySearchText(HWND hWnd)
 {
     KillTimer(hWnd, IDT_SEARCH_DEBOUNCE);
@@ -215,7 +218,10 @@ static void ApplySearchText(HWND hWnd)
     if (SearchActive())
     {
         // Ask the search thread now; show its results once it has finished.
-        g_userContent->search_event(g_searchTermUtf8);
+        if (g_userContent)
+        {
+            g_userContent->search_event(g_searchTermUtf8);
+        }
         SetTimer(hWnd, IDT_REFRESH_GRID_SOON, kRefreshSoonMs, nullptr);
     }
     else
@@ -224,94 +230,44 @@ static void ApplySearchText(HWND hWnd)
     }
 }
 
-// Search box keyboard shortcuts: Enter searches immediately, Esc clears.
-static LRESULT CALLBACK SearchBoxProc(HWND hEdit, UINT message, WPARAM wParam, LPARAM lParam,
-                                      UINT_PTR subclassId, DWORD_PTR refData)
+static void ClearSearch(HWND hWnd)
 {
-    UNREFERENCED_PARAMETER(refData);
-    switch (message)
-    {
-    case WM_KEYDOWN:
-        if (wParam == VK_RETURN)
-        {
-            ApplySearchText(GetParent(hEdit));
-            return 0;
-        }
-        if (wParam == VK_ESCAPE)
-        {
-            SetWindowTextW(hEdit, L"");
-            ApplySearchText(GetParent(hEdit));
-            return 0;
-        }
-        break;
-    case WM_CHAR:
-        if (wParam == L'\r' || wParam == 0x1B)
-        {
-            return 0; // swallow so the edit control doesn't beep
-        }
-        break;
-    case WM_NCDESTROY:
-        RemoveWindowSubclass(hEdit, SearchBoxProc, subclassId);
-        break;
-    }
-    return DefSubclassProc(hEdit, message, wParam, lParam);
+    SetDlgItemTextW(hWnd, IDC_SEARCH_BOX, L"");
+    ApplySearchText(hWnd);
 }
 
-static void CreateMainControls(HWND hWnd)
+static void CreateMainPageControls(HWND hWnd)
 {
-    g_mainWindow = hWnd;
-    g_uiFont = CreateUiFont();
+    auto make = [hWnd](DWORD exStyle, const wchar_t* className, const wchar_t* text, DWORD style, int id) {
+        HWND hControl = CreateWindowExW(exStyle, className, text, WS_CHILD | style, 0, 0, 0, 0, hWnd,
+                                        reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)), hInst, nullptr);
+        if (hControl && g_uiFont)
+        {
+            SendMessageW(hControl, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
+        }
+        return hControl;
+    };
 
-    HWND hAddButton = CreateWindowW(L"BUTTON", L"Add Password",
-        WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-        kMargin, kMargin, kButtonWidth, kButtonHeight,
-        hWnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_ADD_PASSWORD_BTN)), hInst, nullptr);
-
-    HWND hSearch = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
-        WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
-        0, 0, 0, 0,
-        hWnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_SEARCH_BOX)), hInst, nullptr);
+    // Created in tab order.
+    make(0, L"BUTTON", L"Add Password", WS_TABSTOP | BS_PUSHBUTTON, IDC_ADD_PASSWORD_BTN);
+    HWND hSearch = make(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_TABSTOP | ES_AUTOHSCROLL, IDC_SEARCH_BOX);
     SendMessageW(hSearch, EM_SETCUEBANNER, TRUE, reinterpret_cast<LPARAM>(L"Search by description, URL or username"));
     SendMessageW(hSearch, EM_LIMITTEXT, 256, 0);
-    SetWindowSubclass(hSearch, SearchBoxProc, 1, 0);
-
-    HWND hClear = CreateWindowW(L"BUTTON", L"Clear",
-        WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON | WS_DISABLED,
-        0, 0, 0, 0,
-        hWnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_SEARCH_CLEAR_BTN)), hInst, nullptr);
-
-    HWND hStatus = CreateWindowW(L"STATIC", g_sessionStatus.c_str(),
-        WS_CHILD | WS_VISIBLE | SS_LEFT | SS_PATHELLIPSIS | SS_CENTERIMAGE,
-        0, 0, 0, 0,
-        hWnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_SESSION_STATUS)), hInst, nullptr);
-
-    if (g_uiFont)
-    {
-        SendMessageW(hAddButton, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-        SendMessageW(hSearch, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-        SendMessageW(hClear, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-        SendMessageW(hStatus, WM_SETFONT, reinterpret_cast<WPARAM>(g_uiFont), TRUE);
-    }
+    make(0, L"BUTTON", L"Clear", WS_TABSTOP | BS_PUSHBUTTON | WS_DISABLED, IDC_SEARCH_CLEAR_BTN);
 
     g_passwordGrid.Create(hWnd, hInst, IDC_PASSWORD_GRID, g_uiFont);
 
-    // No session means nowhere to queue operations or search.
-    EnableWindow(hAddButton, g_userContent != nullptr);
-    EnableWindow(hSearch, g_userContent != nullptr);
-
-    if (g_userContent)
-    {
-        RefreshPasswordGrid();
-        SetTimer(hWnd, IDT_REFRESH_GRID, kRefreshIntervalMs, nullptr);
-    }
+    make(0, L"STATIC", L"", SS_LEFT | SS_PATHELLIPSIS | SS_CENTERIMAGE, IDC_SESSION_STATUS);
+    make(0, L"BUTTON", L"Logout", WS_TABSTOP | BS_PUSHBUTTON, IDC_LOGOUT_BTN);
 }
 
 // Top row:  [Add Password]  [search box ..................]  [Clear]
 // Middle:   password grid (fills the window)
-// Bottom:   status line
-static void LayoutMainControls(HWND hWnd, int clientWidth, int clientHeight)
+// Bottom:   status line .............................. [Logout]
+static void LayoutMainPage(HWND hWnd, int clientWidth, int clientHeight)
 {
     int clearX = (std::max)(0, clientWidth - kMargin - kClearButtonWidth);
+    MoveWindow(GetDlgItem(hWnd, IDC_ADD_PASSWORD_BTN), kMargin, kMargin, kButtonWidth, kButtonHeight, TRUE);
     MoveWindow(GetDlgItem(hWnd, IDC_SEARCH_CLEAR_BTN), clearX, kMargin, kClearButtonWidth, kButtonHeight, TRUE);
 
     int searchX = kMargin + kButtonWidth + kMargin;
@@ -319,14 +275,25 @@ static void LayoutMainControls(HWND hWnd, int clientWidth, int clientHeight)
     MoveWindow(GetDlgItem(hWnd, IDC_SEARCH_BOX), searchX, searchY,
                (std::max)(0, clearX - 8 - searchX), kSearchHeight, TRUE);
 
-    int statusY = (std::max)(0, clientHeight - kMargin / 2 - kStatusHeight);
-    MoveWindow(GetDlgItem(hWnd, IDC_SESSION_STATUS), kMargin, statusY,
-               (std::max)(0, clientWidth - 2 * kMargin), kStatusHeight, TRUE);
+    int bottomY = (std::max)(0, clientHeight - kMargin - kButtonHeight);
+    int logoutX = (std::max)(0, clientWidth - kMargin - kLogoutButtonWidth);
+    MoveWindow(GetDlgItem(hWnd, IDC_LOGOUT_BTN), logoutX, bottomY, kLogoutButtonWidth, kButtonHeight, TRUE);
+    MoveWindow(GetDlgItem(hWnd, IDC_SESSION_STATUS), kMargin, bottomY,
+               (std::max)(0, logoutX - 2 * kMargin), kButtonHeight, TRUE);
 
     int gridY = kMargin + kButtonHeight + kMargin;
     g_passwordGrid.SetBounds(kMargin, gridY,
                              (std::max)(0, clientWidth - 2 * kMargin),
-                             (std::max)(0, statusY - 8 - gridY));
+                             (std::max)(0, bottomY - 12 - gridY));
+}
+
+static void ShowMainPage(HWND hWnd, bool show)
+{
+    for (int id : kMainPageControlIds)
+    {
+        ShowWindow(GetDlgItem(hWnd, id), show ? SW_SHOW : SW_HIDE);
+    }
+    ShowWindow(g_passwordGrid.Handle(), show ? SW_SHOW : SW_HIDE);
 }
 
 // Opens the View Password dialog for the password behind a grid item.
@@ -343,6 +310,160 @@ static void OpenPasswordFromGrid(HWND hWnd, const password* selected)
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Switching pages / sessions
+// ---------------------------------------------------------------------------------------------
+
+static void ShowLoginPage(HWND hWnd, const std::wstring& username = std::wstring())
+{
+    ShowMainPage(hWnd, false);
+    LoginPage::Show(hWnd, true);
+    LoginPage::Reset(hWnd, username);
+}
+
+// Creates the core DisplayContent for the user (loads their passwords and starts the operation,
+// search and data-store threads), then shows the password manager page.
+static void StartSession(HWND hWnd, const std::string& username, int userId)
+{
+    std::string dbPath = g_dbPathUtf8;
+    g_userContent = std::make_unique<DisplayContent>(username, userId, &dbPath);
+    g_signedInUser = Utf8ToWide(username);
+    g_sessionStatus = L"Signed in as \"" + g_signedInUser + L"\"";
+
+    // Fresh search state for every session.
+    SetDlgItemTextW(hWnd, IDC_SEARCH_BOX, L"");
+    KillTimer(hWnd, IDT_SEARCH_DEBOUNCE);
+    g_searchText.clear();
+    g_searchTermUtf8.clear();
+    EnableWindow(GetDlgItem(hWnd, IDC_SEARCH_CLEAR_BTN), FALSE);
+
+    LoginPage::Show(hWnd, false);
+    LoginPage::SetMessage(hWnd, L"", false);
+    ShowMainPage(hWnd, true);
+
+    RefreshPasswordGrid();
+    SetTimer(hWnd, IDT_REFRESH_GRID, kRefreshIntervalMs, nullptr);
+    SetFocus(GetDlgItem(hWnd, IDC_SEARCH_BOX));
+}
+
+// Ends the session and returns to the login page.
+static void Logout(HWND hWnd)
+{
+    KillTimer(hWnd, IDT_REFRESH_GRID);
+    KillTimer(hWnd, IDT_REFRESH_GRID_SOON);
+    KillTimer(hWnd, IDT_SEARCH_DEBOUNCE);
+
+    // Stopping the core joins its threads; the data-store thread finishes its current wait
+    // (up to ~2 seconds) and saves one last time, so show a wait cursor meanwhile.
+    HCURSOR previousCursor = SetCursor(LoadCursor(nullptr, IDC_WAIT));
+    g_userContent.reset();
+    SetCursor(previousCursor);
+
+    g_passwordGrid.Refresh({});
+    g_signedInUser.clear();
+    g_sessionStatus.clear();
+    g_searchText.clear();
+    g_searchTermUtf8.clear();
+    SetDlgItemTextW(hWnd, IDC_SEARCH_BOX, L"");
+    KillTimer(hWnd, IDT_SEARCH_DEBOUNCE); // clearing the box above restarts it
+
+    ShowLoginPage(hWnd);
+}
+
+static void TryLogin(HWND hWnd)
+{
+    std::wstring username = LoginPage::Username(hWnd);
+    std::wstring passwordText = LoginPage::Password(hWnd);
+
+    if (username.empty() || passwordText.empty())
+    {
+        LoginPage::SetMessage(hWnd, L"Please enter your username and password.", true);
+        SetFocus(GetDlgItem(hWnd, username.empty() ? IDC_LOGIN_USERNAME : IDC_LOGIN_PASSWORD));
+        return;
+    }
+
+    int userId = -1;
+    std::string storedUsername;
+    std::wstring error;
+    LoginResult result = AuthenticateUser(g_dbPathUtf8, WideToUtf8(username), WideToUtf8(passwordText),
+                                          userId, storedUsername, error);
+    SecureZeroMemory(passwordText.data(), passwordText.size() * sizeof(wchar_t));
+
+    switch (result)
+    {
+    case LoginResult::Success:
+        LoginPage::ClearPassword(hWnd);
+        StartSession(hWnd, storedUsername, userId);
+        break;
+    case LoginResult::InvalidCredentials:
+        LoginPage::ClearPassword(hWnd);
+        LoginPage::SetMessage(hWnd, L"Incorrect username or password.", true);
+        LoginPage::FocusPassword(hWnd);
+        break;
+    default:
+        MessageBoxW(hWnd, error.c_str(), L"Login", MB_OK | MB_ICONERROR);
+        break;
+    }
+}
+
+static void OpenCreateAccount(HWND hWnd)
+{
+    std::wstring createdUsername;
+    if (ShowCreateAccountDialog(hInst, hWnd, g_dbPathUtf8, createdUsername))
+    {
+        LoginPage::Reset(hWnd, createdUsername);
+        LoginPage::SetMessage(hWnd, L"Account created. Enter your password to log in.", false);
+    }
+}
+
+static void CreateMainControls(HWND hWnd)
+{
+    g_mainWindow = hWnd;
+    g_uiFont = CreateUiFont();
+    g_titleFont = CreateUiFont(220, FW_SEMIBOLD);
+
+    LoginPage::Create(hWnd, hInst, g_uiFont, g_titleFont);
+    CreateMainPageControls(hWnd);
+
+    ShowLoginPage(hWnd);
+    if (g_dbPath.empty())
+    {
+        LoginPage::EnableActions(hWnd, false);
+        LoginPage::SetMessage(hWnd, L"Database not found. Set DB_PATH to the full path of db\\user_accounts.db.", true);
+    }
+}
+
+// Enter and Esc arrive as IDOK / IDCANCEL (IsDialogMessage in the message loop), so route them
+// to whatever makes sense for the page and the focused control.
+static void OnEnterKey(HWND hWnd)
+{
+    if (LoginPage::IsShown(hWnd))
+    {
+        if (IsWindowEnabled(GetDlgItem(hWnd, IDC_LOGIN_BTN)))
+        {
+            TryLogin(hWnd);
+        }
+        return;
+    }
+    HWND hFocus = GetFocus();
+    if (hFocus == GetDlgItem(hWnd, IDC_SEARCH_BOX))
+    {
+        ApplySearchText(hWnd);
+    }
+    else if (hFocus == g_passwordGrid.Handle())
+    {
+        OpenPasswordFromGrid(hWnd, g_passwordGrid.SelectedPassword());
+    }
+}
+
+static void OnEscapeKey(HWND hWnd)
+{
+    if (!LoginPage::IsShown(hWnd) && GetFocus() == GetDlgItem(hWnd, IDC_SEARCH_BOX))
+    {
+        ClearSearch(hWnd);
+    }
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -354,8 +475,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     INITCOMMONCONTROLSEX commonControls = { sizeof(commonControls), ICC_LISTVIEW_CLASSES | ICC_STANDARD_CLASSES };
     InitCommonControlsEx(&commonControls);
 
-    // Start the core app before the window is created so the UI can reflect the session state.
-    StartUserSession();
+    g_dbPath = FindDatabasePath();
+    g_dbPathUtf8 = WideToUtf8(g_dbPath.wstring()); // SQLite expects UTF-8 paths
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -365,7 +486,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Perform application initialization:
     if (!InitInstance (hInstance, nCmdShow))
     {
-        g_userContent.reset();
         return FALSE;
     }
 
@@ -373,23 +493,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    // Main message loop:
+    // Main message loop. IsDialogMessage gives the main window dialog-style keyboard handling:
+    // Tab / Shift+Tab move between controls, Enter sends IDOK and Esc sends IDCANCEL.
     while (GetMessage(&msg, nullptr, 0, 0))
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        if (!TranslateAccelerator(g_mainWindow, hAccelTable, &msg) &&
+            !(g_mainWindow && IsDialogMessage(g_mainWindow, &msg)))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
     }
 
-    // Stops the core threads. The data-store thread does one final save before it exits,
-    // so passwords added just before closing are still written to the database.
+    // Stops the core threads if the window was closed while logged in. The data-store thread
+    // does one final save before it exits, so recent changes are still written to the database.
     g_userContent.reset();
 
     if (g_uiFont)
     {
         DeleteObject(g_uiFont);
+    }
+    if (g_titleFont)
+    {
+        DeleteObject(g_titleFont);
     }
 
     return (int) msg.wParam;
@@ -438,7 +564,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, 800, 500, nullptr, nullptr, hInstance, nullptr);
+      CW_USEDEFAULT, 0, 800, 560, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -456,13 +582,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //  PURPOSE: Processes messages for the main window.
 //
-//  WM_CREATE   - create the child controls
-//  WM_COMMAND  - process the application menu and buttons
-//  WM_NOTIFY   - clicks on the password grid
-//  WM_TIMER    - refresh the password grid
-//  WM_SIZE     - lay out the controls
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
+//  WM_CREATE          - create the login and password manager controls
+//  WM_COMMAND         - process the application menu and buttons
+//  WM_NOTIFY          - clicks on the password grid
+//  WM_TIMER           - refresh the password grid / run a search
+//  WM_SIZE            - lay out the controls
+//  WM_CTLCOLORSTATIC  - label colours
+//  WM_ACTIVATE        - remember / restore keyboard focus
+//  WM_PAINT           - Paint the main window
+//  WM_DESTROY         - post a quit message and return
 //
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -478,6 +606,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Parse the menu selections:
             switch (wmId)
             {
+            case IDOK:
+                OnEnterKey(hWnd);
+                break;
+            case IDCANCEL:
+                OnEscapeKey(hWnd);
+                break;
+            case IDC_LOGIN_BTN:
+                TryLogin(hWnd);
+                break;
+            case IDC_CREATE_ACCOUNT_BTN:
+                OpenCreateAccount(hWnd);
+                break;
+            case IDC_LOGIN_USERNAME:
+            case IDC_LOGIN_PASSWORD:
+                if (HIWORD(wParam) == EN_CHANGE)
+                {
+                    LoginPage::SetMessage(hWnd, L"", false); // typing clears the last error
+                }
+                break;
+            case IDC_LOGOUT_BTN:
+                Logout(hWnd);
+                break;
             case IDC_ADD_PASSWORD_BTN:
                 if (ShowAddPasswordDialog(hInst, hWnd, g_userContent.get()) == IDOK)
                 {
@@ -490,12 +640,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     // Wait for a pause in typing before searching.
                     EnableWindow(GetDlgItem(hWnd, IDC_SEARCH_CLEAR_BTN),
                                  GetWindowTextLengthW(GetDlgItem(hWnd, IDC_SEARCH_BOX)) > 0);
-                    SetTimer(hWnd, IDT_SEARCH_DEBOUNCE, kSearchDebounceMs, nullptr);
+                    if (g_userContent)
+                    {
+                        SetTimer(hWnd, IDT_SEARCH_DEBOUNCE, kSearchDebounceMs, nullptr);
+                    }
                 }
                 break;
             case IDC_SEARCH_CLEAR_BTN:
-                SetDlgItemTextW(hWnd, IDC_SEARCH_BOX, L"");
-                ApplySearchText(hWnd);
+                ClearSearch(hWnd);
                 SetFocus(GetDlgItem(hWnd, IDC_SEARCH_BOX));
                 break;
             case IDM_ABOUT:
@@ -545,13 +697,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_SIZE:
-        LayoutMainControls(hWnd, LOWORD(lParam), HIWORD(lParam));
+        LoginPage::Layout(hWnd, LOWORD(lParam), HIWORD(lParam));
+        LayoutMainPage(hWnd, LOWORD(lParam), HIWORD(lParam));
         break;
+    case WM_CTLCOLORSTATIC:
+        if (HBRUSH brush = LoginPage::OnCtlColorStatic(reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(lParam)))
+        {
+            return reinterpret_cast<LRESULT>(brush);
+        }
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    case WM_ACTIVATE:
+        // A plain window doesn't restore focus to its last control on its own (dialogs do).
+        if (LOWORD(wParam) == WA_INACTIVE)
+        {
+            g_lastFocus = GetFocus();
+        }
+        else if (g_lastFocus && IsChild(hWnd, g_lastFocus) && IsWindowVisible(g_lastFocus))
+        {
+            SetFocus(g_lastFocus);
+            return 0;
+        }
+        return DefWindowProc(hWnd, message, wParam, lParam);
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code here...
             EndPaint(hWnd, &ps);
         }
         break;
