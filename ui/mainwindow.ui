@@ -129,7 +129,7 @@
    </palette>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Password Manager</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="login_btn">
@@ -222,33 +222,20 @@
    <widget class="QLineEdit" name="search_input">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>40</y>
-      <width>271</width>
-      <height>41</height>
+      <x>16</x>
+      <y>16</y>
+      <width>616</width>
+      <height>36</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="search_btn">
-    <property name="geometry">
-     <rect>
-      <x>460</x>
-      <y>40</y>
-      <width>141</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Search</string>
     </property>
    </widget>
    <widget class="QTableWidget" name="password_table">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>90</y>
-      <width>631</width>
-      <height>331</height>
+      <x>16</x>
+      <y>64</y>
+      <width>768</width>
+      <height>418</height>
      </rect>
     </property>
     <column>
@@ -270,43 +257,29 @@
    <widget class="QPushButton" name="password_add_btn">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>430</y>
-      <width>141</width>
-      <height>41</height>
+      <x>644</x>
+      <y>16</y>
+      <width>140</width>
+      <height>36</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>Add Password</string>
     </property>
    </widget>
    <widget class="QPushButton" name="logout_btn">
     <property name="geometry">
      <rect>
-      <x>650</x>
-      <y>10</y>
-      <width>141</width>
-      <height>41</height>
+      <x>664</x>
+      <y>494</y>
+      <width>120</width>
+      <height>36</height>
      </rect>
     </property>
     <property name="text">
      <string>Logout</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="cancel_search_btn">
-    <property name="geometry">
-     <rect>
-      <x>460</x>
-      <y>40</y>
-      <width>141</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Cancel</string>
-    </property>
-   </widget>
-   <zorder>cancel_search_btn</zorder>
    <zorder>login_btn</zorder>
    <zorder>create_acc_btn</zorder>
    <zorder>username_input</zorder>
@@ -314,7 +287,6 @@
    <zorder>username_label</zorder>
    <zorder>password_label</zorder>
    <zorder>search_input</zorder>
-   <zorder>search_btn</zorder>
    <zorder>password_table</zorder>
    <zorder>password_add_btn</zorder>
    <zorder>logout_btn</zorder>
