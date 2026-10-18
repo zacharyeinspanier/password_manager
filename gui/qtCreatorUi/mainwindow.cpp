@@ -415,9 +415,17 @@ void MainWindow::login(std::string username, int user_id)
     this->search_term.clear();
     this->search_active = false;
 
+    // Opening the account loads the encryption key file next to the database (created on first
+    // use); if it can't be read the core throws, so stay on the login page and say why.
+    try
     {
         std::lock_guard<std::mutex> user_content_lock(this->user_content_mutex);
         this->user_content = launch_app(username, user_id, &db_path_std_string);
+    }
+    catch (const std::exception &error)
+    {
+        display_message(QString("Your passwords could not be opened:\n\n") + error.what(), QMessageBox::Critical);
+        return;
     }
 
     std::function<void(operation)> queue_operation_callback = [this](operation new_operation) -> void{

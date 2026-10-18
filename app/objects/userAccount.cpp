@@ -1,4 +1,5 @@
 #include "userAccount.hpp"
+#include "../encryption/encryption.cpp"
 
 #include <algorithm>
 #include <cctype>
@@ -62,7 +63,9 @@ namespace
 }
 
 // userAccount implementation
+// Throws std::runtime_error if the encryption key file can't be loaded or created.
 UserAccount::UserAccount(const std::string username, const int user_id, std::string *db_path)
+    : cipher(Encryption::from_key_file(*db_path))
 {
     this->account_username = username;
     this->user_id = user_id;
@@ -172,6 +175,9 @@ void UserAccount::add_password(const password *new_password)
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     // Copy password
     password cpy_new_password = *new_password;
+
+    // Encrypt before storing (passwords loaded from the database are already encrypted)
+    cpy_new_password.encryped_password = this->encrypt_for_storage(cpy_new_password.encryped_password);
 
     // Set password id
     if (cpy_new_password.p_id == -1)
@@ -319,7 +325,7 @@ void UserAccount::modify_password(const password *updated_password)
         }
         if (updated_password->encryped_password != DEFAULT_STRING_VAL)
         {
-            password_ptr->encryped_password = updated_password->encryped_password;
+            password_ptr->encryped_password = this->encrypt_for_storage(updated_password->encryped_password);
         }
         if (updated_password->url != DEFAULT_STRING_VAL)
         {
@@ -336,7 +342,46 @@ void UserAccount::modify_password(const password *updated_password)
     }
 }
 
+std::string UserAccount::encrypt_for_storage(const std::string &value) const
+{
+    std::string already_plain;
+    if (this->cipher.try_decrypt(value, already_plain))
+    {
+        return value; // already encrypted with our key
+    }
+    return this->cipher.encrypt(value);
+}
+
+password UserAccount::decrypted_copy(const password &stored) const
+{
+    password copy = stored;
+    std::string plain;
+    if (this->cipher.try_decrypt(stored.encryped_password, plain))
+    {
+        copy.encryped_password = plain;
+    }
+    else
+    {
+        // Wrong key file or a corrupted value. Show an empty password rather than ciphertext;
+        // because modify_password ignores empty values, saving the entry won't overwrite it.
+        std::cerr << "Could not decrypt the password for entry " << stored.p_id << std::endl;
+        copy.encryped_password = DEFAULT_STRING_VAL;
+    }
+    return copy;
+}
+
 std::unordered_map<int, password> UserAccount::get_data_copy()
+{
+    std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
+    std::unordered_map<int, password> user_data;
+    for (auto it = this->pass_id_map.begin(); it != this->pass_id_map.end(); ++it)
+    {
+        user_data.emplace(it->second->p_id, this->decrypted_copy(*(it->second.get())));
+    }
+    return user_data;
+}
+
+std::unordered_map<int, password> UserAccount::get_encrypted_data_copy()
 {
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     std::unordered_map<int, password> user_data;
@@ -374,6 +419,12 @@ std::unordered_map<int, password> UserAccount::search(std::string search_term)
     collect_partial_matches(this->url_map, needle, search_result);
     collect_partial_matches(this->username_map, needle, search_result);
     collect_partial_matches(this->description_map, needle, search_result);
+
+    // Results go to the GUI, so decrypt their passwords.
+    for (auto &item : search_result)
+    {
+        item.second = this->decrypted_copy(item.second);
+    }
     return search_result;
 }
 

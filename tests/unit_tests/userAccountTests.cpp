@@ -262,6 +262,49 @@ void test_fourteen()
     std::cout << "Test Fourteen Pass" << std::endl;
 }
 
+void test_fifteen()
+{
+    // TEST passwords are encrypted when stored and decrypted when handed out
+    password new_password;
+    new_password.p_id = 501;
+    new_password.username = "encryption_user";
+    new_password.encryped_password = "plain_secret_501";
+    new_password.description = "encryption test entry";
+    test_user->add_password(&new_password);
+
+    // Stored (and written to the database) encrypted
+    std::string stored = test_user->get_encrypted_data_copy().at(501).encryped_password;
+    assert(stored.rfind(Encryption::PREFIX, 0) == 0);
+    assert(stored.find("plain_secret_501") == std::string::npos);
+
+    // Handed to the GUI decrypted
+    assert(test_user->get_data_copy().at(501).encryped_password == "plain_secret_501");
+    assert(test_user->search("encryption test").at(501).encryped_password == "plain_secret_501");
+
+    // Adding an already-encrypted value (as when loading from the database) doesn't encrypt it twice
+    password reloaded = test_user->get_encrypted_data_copy().at(501);
+    reloaded.p_id = 502;
+    test_user->add_password(&reloaded);
+    assert(test_user->get_encrypted_data_copy().at(502).encryped_password == stored);
+    assert(test_user->get_data_copy().at(502).encryped_password == "plain_secret_501");
+
+    // modify_password re-encrypts the new password
+    password modify_password;
+    modify_password.p_id = 501;
+    modify_password.username = "";
+    modify_password.encryped_password = "changed_secret";
+    modify_password.description = "";
+    modify_password.url = "";
+    test_user->modify_password(&modify_password);
+    std::string stored_after = test_user->get_encrypted_data_copy().at(501).encryped_password;
+    assert(stored_after.rfind(Encryption::PREFIX, 0) == 0 && stored_after != stored);
+    assert(test_user->get_data_copy().at(501).encryped_password == "changed_secret");
+
+    test_user->remove_password(501);
+    test_user->remove_password(502);
+    std::cout << "Test Fifteen Pass" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // NOTE: must set enviroment var DB_PATH.
@@ -285,6 +328,7 @@ int main(int argc, char *argv[])
     test_eleven();
     test_thirteen();
     test_fourteen();
+    test_fifteen();
 
     delete test_user;
     test_user = nullptr;

@@ -325,8 +325,19 @@ static void ShowLoginPage(HWND hWnd, const std::wstring& username = std::wstring
 // search and data-store threads), then shows the password manager page.
 static void StartSession(HWND hWnd, const std::string& username, int userId)
 {
+    // Opening the account loads the encryption key file next to the database (created on first
+    // use); if it can't be read the core throws, so stay on the login page and say why.
     std::string dbPath = g_dbPathUtf8;
-    g_userContent = std::make_unique<DisplayContent>(username, userId, &dbPath);
+    try
+    {
+        g_userContent = std::make_unique<DisplayContent>(username, userId, &dbPath);
+    }
+    catch (const std::exception& error)
+    {
+        std::wstring message = L"Your passwords could not be opened:\n\n" + Utf8ToWide(error.what());
+        MessageBoxW(hWnd, message.c_str(), L"Login", MB_OK | MB_ICONERROR);
+        return;
+    }
     g_signedInUser = Utf8ToWide(username);
     g_sessionStatus = L"Signed in as \"" + g_signedInUser + L"\"";
 

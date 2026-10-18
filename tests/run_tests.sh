@@ -1,5 +1,13 @@
 source ../.env
 
+g++ unit_tests/encryptionTests.cpp -o ./output/encryptionTests -std=c++20
+
+echo "=================="
+echo "Encryption Tests"
+echo "=================="
+./output/encryptionTests
+echo "=================="
+
 g++ unit_tests/userAccountTests.cpp -o ./output/userAccountTests -std=c++20 -lsqlite3
 
 echo "=================="
