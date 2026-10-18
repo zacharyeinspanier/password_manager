@@ -23,7 +23,7 @@ DisplayContent::DisplayContent(std::string username, int user_id, std::string *d
     this->operation_event_state = false;
     this->operation_loop_exit = false;
 
-    this->search_term = nullptr;
+    this->search_term.clear();
     this->search_event_state = false;
     this->search_loop_exit = false;
 
@@ -116,8 +116,6 @@ void DisplayContent::stop_processes()
         std::lock_guard<std::mutex> search_exit_lock(this->search_loop_mutex);
         this->search_loop_exit = true;
         this->search_event_state = true;
-        std::string exit_serach_term = "EXIT";
-        this->search_term = &exit_serach_term;
     }
     this->search_term_cv.notify_all(); // notify wakes thread -> then exit
     this->search_thread.join();
@@ -171,17 +169,17 @@ void DisplayContent::operation_event(operation &new_operation)
 /// The sleeping thread is DisplayContent::search_bar_process().
 /// It is intended to process one search at a time.
 ///
+/// The term is copied, so the caller may change or free its string right away. If a search is
+/// already pending, the newer term replaces it (only the latest search matters to the UI).
+///
 /// @param new_search_term - the new search term to process
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-void DisplayContent::search_event(std::string &new_search_term)
+void DisplayContent::search_event(const std::string &new_search_term)
 {
     std::unique_lock<std::mutex> search_event_lock(this->search_term_mutex, std::defer_lock);
     search_event_lock.lock();
-    if (this->search_term == nullptr)
-    {
-        this->search_term = &new_search_term;
-        this->search_event_state = true;
-    }
+    this->search_term = new_search_term;
+    this->search_event_state = true;
     search_event_lock.unlock();
     this->search_term_cv.notify_all();
 }

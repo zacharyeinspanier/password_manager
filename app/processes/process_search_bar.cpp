@@ -10,7 +10,7 @@ void DisplayContent::search_bar_process()
     while (true)
     {
         search_term_lock.lock();
-        while (this->search_event_state == false && this->search_term == nullptr)
+        while (this->search_event_state == false)
         {
             this->search_term_cv.wait(search_term_lock);
         }
@@ -26,7 +26,7 @@ void DisplayContent::search_bar_process()
 
         // !!CRITICAL CODE!! //
         user_account_lock.lock();
-        std::unordered_map<int, password> unordered_search_result = this->usr_acc->search(*this->search_term);
+        std::unordered_map<int, password> unordered_search_result = this->usr_acc->search(this->search_term);
         user_account_lock.unlock();
 
         // !!CRITICAL CODE!! //
@@ -60,7 +60,6 @@ void DisplayContent::search_bar_process()
         search_result_lock.unlock();
 
         this->search_event_state = false;
-        this->search_term = nullptr;
         search_term_lock.unlock();
     }
 }

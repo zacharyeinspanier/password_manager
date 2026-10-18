@@ -60,5 +60,6 @@
         "iomanip": "cpp",
         "chrono": "cpp",
         "map": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/Users/zeins/Repositories/password_manager/ui"
 }

@@ -218,6 +218,50 @@ void test_twelve()
     std::cout << "Test Twelve Pass" << std::endl;
 }
 
+void test_thirteen()
+{
+    // TEST search matches part of a field, ignoring case, across url, username and description
+    password new_password;
+    new_password.p_id = 401;
+    new_password.username = "Partial_User";
+    new_password.encryped_password = "password_401";
+    new_password.description = "My Work Email";
+    new_password.url = "https://Mail.Example.com";
+    test_user->add_password(&new_password);
+
+    for (std::string term : {"mail.example", "MAIL.EXAMPLE", "partial_u", "work email", "WORK"})
+    {
+        auto search_result = test_user->search(term);
+        assert(search_result.contains(401));
+    }
+    assert(test_user->search("not in any field").contains(401) == false);
+    assert(test_user->search("").empty());
+    std::cout << "Test Thirteen Pass" << std::endl;
+}
+
+void test_fourteen()
+{
+    // TEST modify_password keeps search in sync: new values are found, old values are not
+    password modify_password;
+    modify_password.p_id = 401;
+    modify_password.username = "renamed_user";
+    modify_password.encryped_password = "";
+    modify_password.description = "Personal Email";
+    modify_password.url = "https://other.example.org";
+    test_user->modify_password(&modify_password);
+
+    assert(test_user->search("renamed_user").contains(401));
+    assert(test_user->search("personal").contains(401));
+    assert(test_user->search("other.example").contains(401));
+    assert(test_user->search("partial_user").contains(401) == false);
+    assert(test_user->search("work email").contains(401) == false);
+    assert(test_user->search("mail.example.com").contains(401) == false);
+
+    test_user->remove_password(401);
+    assert(test_user->search("renamed_user").contains(401) == false);
+    std::cout << "Test Fourteen Pass" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // NOTE: must set enviroment var DB_PATH.
@@ -239,6 +283,8 @@ int main(int argc, char *argv[])
     test_ten();
     test_twelve();
     test_eleven();
+    test_thirteen();
+    test_fourteen();
 
     delete test_user;
     test_user = nullptr;
