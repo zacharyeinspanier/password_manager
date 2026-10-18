@@ -2,8 +2,8 @@
 #include "PasswordForm.h"
 #include "Resource.h"
 
-#include "../../app/objects/displayContent.hpp"
-#include "../../app/structs/operations.hpp"
+#include "../../../app/objects/displayContent.hpp"
+#include "../../../app/structs/operations.hpp"
 
 namespace
 {

@@ -2,8 +2,8 @@
 #define ADD_PASSWORD_H
 
 #include <QDialog>
-#include "../app/structs/password.hpp"
-#include "../app/structs/operations.hpp"
+#include "../../app/structs/password.hpp"
+#include "../../app/structs/operations.hpp"
 
 namespace Ui {
 class add_password;

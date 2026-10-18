@@ -5,7 +5,7 @@
 // Used by the Add Password and View Password dialogs so both behave the same way.
 
 #include "framework.h"
-#include "../../app/structs/password.hpp"
+#include "../../../app/structs/password.hpp"
 
 // Sets the maximum length of each input box. Call from WM_INITDIALOG.
 void LimitPasswordFormText(HWND hDlg);

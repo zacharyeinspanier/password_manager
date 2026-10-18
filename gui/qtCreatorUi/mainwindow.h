@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QtSql/QSqlDatabase>
-#include "../app/objects/displayContent.hpp"
+#include "../../app/objects/displayContent.hpp"
 #include "./add_password.h"
 #include "./view_password.h"
 

@@ -8,7 +8,7 @@
 // "Delete" asks for confirmation, queues a REMOVE operation, and closes the dialog.
 
 #include "framework.h"
-#include "../../app/structs/password.hpp"
+#include "../../../app/structs/password.hpp"
 
 class DisplayContent;
 

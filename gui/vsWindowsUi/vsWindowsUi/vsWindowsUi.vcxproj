@@ -22,8 +22,9 @@
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{c6b10f63-4a7a-4084-b07f-e43426e45b73}</ProjectGuid>
-    <RootNamespace>passwordManagerWindowsUI</RootNamespace>
+    <RootNamespace>vsWindowsUi</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>vsWindowsUi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -77,7 +78,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -96,7 +97,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,7 +114,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,7 +133,7 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,7 +145,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="passwordManagerWindowsUI.h" />
+    <ClInclude Include="vsWindowsUi.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="AddPasswordDialog.h" />
@@ -154,25 +155,25 @@
     <ClInclude Include="ViewPasswordDialog.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="passwordManagerWindowsUI.cpp" />
+    <ClCompile Include="vsWindowsUi.cpp" />
     <ClCompile Include="AddPasswordDialog.cpp" />
     <ClCompile Include="PasswordForm.cpp" />
     <ClCompile Include="PasswordGrid.cpp" />
     <ClCompile Include="ViewPasswordDialog.cpp" />
     <!-- Core app: app.cpp #includes the rest of app\ as a single translation unit. -->
-    <ClCompile Include="..\..\app\app.cpp" />
+    <ClCompile Include="..\..\..\app\app.cpp" />
     <!-- SQLite amalgamation, compiled as C with warnings off (third-party code). -->
-    <ClCompile Include="..\..\sqlite\sqlite3.c">
+    <ClCompile Include="..\..\..\sqlite\sqlite3.c">
       <CompileAs>CompileAsC</CompileAs>
       <SDLCheck>false</SDLCheck>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="passwordManagerWindowsUI.rc" />
+    <ResourceCompile Include="vsWindowsUi.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="passwordManagerWindowsUI.ico" />
+    <Image Include="vsWindowsUi.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
