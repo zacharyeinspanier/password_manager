@@ -83,3 +83,6 @@ tests/output/*
 gui/vsWindowsUi/vsWindowsUi/x64
 gui/vsWindowsUi/x64
 gui/vsWindowsUi/*.vs
+
+# Encryption key: never commit it (with the database it decrypts every saved password)
+*.db.key

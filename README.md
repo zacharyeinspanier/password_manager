@@ -54,12 +54,22 @@ Use the full path. Variables such as `%USERPROFILE%` are not expanded.
 
 If the project folder was moved or renamed, delete `gui/qtCreatorUi/build/` before configuring so CMake starts fresh.
 
+## Encryption
+
+Saved passwords are encrypted with **ChaCha20-Poly1305** (RFC 8439), implemented in `app/encryption/` with no external libraries. `UserAccount` encrypts a password when it is added or edited, keeps it encrypted in memory and in the database, and decrypts it only in the copies it hands to the GUI (`get_data_copy`, `search`).
+
+- **Stored format:** `ENC1:` followed by base64 text. Each value has its own random nonce, so the same password never encrypts to the same text twice. The Poly1305 tag means a corrupted or modified value fails to decrypt instead of returning garbage.
+- **Key file:** the 32-byte key lives in `<database>.key`, for example `db/user_accounts.db.key`. It is created automatically the first time an account is opened, and never overwritten after that.
+- **Back up the key file.** Without it the saved passwords cannot be recovered. Anyone who has both the database and the key file can decrypt the passwords, so the key file is in `.gitignore`.
+- **Existing databases:** plain-text passwords from before encryption are encrypted automatically the next time their account is opened, and the encrypted values are written back to the database.
+
 ## Running the Tests
 
 The unit tests live in `tests/unit_tests/`:
 
 - **`userAccountTests`** covers adding, removing, editing and searching passwords on a user account.
 - **`displayContentTests`** covers the display layer that sits on top of the account.
+- **`encryptionTests`** checks ChaCha20, Poly1305 and the combined cipher against the RFC 8439 test vectors, plus tamper detection and the key file.
 
 To run them:
 
@@ -74,6 +84,6 @@ The script sources `../.env` to get `DB_PATH`, so create `.env` first (see **Set
 
 ## Future Work
 
-1. **Password encryption:** Encrypt passwords before storing them in the database, and decrypt a password only when the user asks to view it.
+1. **Password encryption:** Passwords are now encrypted (see **Encryption**). Possible next steps: derive the key from each user's login password instead of a key file, and decrypt a password only when the user opens it rather than for the whole list.
 2. **SQL injection prevention:** Login and save operations currently build SQL queries from user input, which leaves them open to SQL injection. Switch to parameterized queries so input is always treated strictly as data.
 3. **Search improvements:** Make search faster and more responsive, and improve match accuracy across name, URL, and description fields.

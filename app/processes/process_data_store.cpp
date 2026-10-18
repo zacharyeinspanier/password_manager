@@ -30,7 +30,7 @@ void DisplayContent::periodic_data_store()
         std::unordered_map<int, password> user_data_copy;
         // !!CRITICAL CODE!! //
         user_account_lock.lock();
-        user_data_copy = this->usr_acc->get_data_copy();
+        user_data_copy = this->usr_acc->get_encrypted_data_copy(); // the database stores encrypted passwords
         user_account_lock.unlock();
 
         sqlite3 *db;
