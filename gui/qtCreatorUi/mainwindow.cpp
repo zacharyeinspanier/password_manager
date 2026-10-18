@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "./create_account.h"
-#include "../app/app.cpp"
+#include "../../app/app.cpp"
 
 #include <QHeaderView>
 #include <QMessageBox>

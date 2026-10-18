@@ -3,8 +3,8 @@
 
 #include <QDialog>
 
-#include "../app/structs/password.hpp"
-#include "../app/structs/operations.hpp"
+#include "../../app/structs/password.hpp"
+#include "../../app/structs/operations.hpp"
 
 namespace Ui {
 class view_password;

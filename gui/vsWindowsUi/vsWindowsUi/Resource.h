@@ -1,17 +1,17 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by passwordManagerWindowsUI.rc
+// Used by vsWindowsUi.rc
 
 #define IDS_APP_TITLE			103
 
 #define IDR_MAINFRAME			128
-#define IDD_PASSWORDMANAGERWINDOWSUI_DIALOG	102
+#define IDD_vsWindowsUi_DIALOG	102
 #define IDD_ABOUTBOX			103
 #define IDM_ABOUT				104
 #define IDM_EXIT				105
-#define IDI_PASSWORDMANAGERWINDOWSUI			107
+#define IDI_vsWindowsUi			107
 #define IDI_SMALL				108
-#define IDC_PASSWORDMANAGERWINDOWSUI			109
+#define IDC_vsWindowsUi			109
 #define IDC_MYICON				2
 #define IDD_ADD_PASSWORD			129
 #define IDD_VIEW_PASSWORD			130

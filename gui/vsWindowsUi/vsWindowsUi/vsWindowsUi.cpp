@@ -1,14 +1,14 @@
-// passwordManagerWindowsUI.cpp : Defines the entry point for the application.
+// vsWindowsUi.cpp : Defines the entry point for the application.
 //
 
 #include "framework.h"
-#include "passwordManagerWindowsUI.h"
+#include "vsWindowsUi.h"
 #include "AddPasswordDialog.h"
 #include "PasswordGrid.h"
 #include "StringConvert.h"
 #include "ViewPasswordDialog.h"
 
-#include "../../app/objects/displayContent.hpp"
+#include "../../../app/objects/displayContent.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -359,7 +359,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_PASSWORDMANAGERWINDOWSUI, szWindowClass, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_vsWindowsUi, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // Perform application initialization:
@@ -369,7 +369,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_PASSWORDMANAGERWINDOWSUI));
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_vsWindowsUi));
 
     MSG msg;
 
@@ -413,10 +413,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PASSWORDMANAGERWINDOWSUI));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_vsWindowsUi));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_PASSWORDMANAGERWINDOWSUI);
+    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_vsWindowsUi);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 

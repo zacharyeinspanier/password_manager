@@ -11,7 +11,7 @@
 #include <commctrl.h>
 #include <vector>
 
-#include "../../app/structs/password.hpp"
+#include "../../../app/structs/password.hpp"
 
 class PasswordGrid
 {

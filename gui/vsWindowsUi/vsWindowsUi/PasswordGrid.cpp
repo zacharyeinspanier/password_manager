@@ -75,7 +75,7 @@ bool PasswordGrid::Create(HWND hParent, HINSTANCE hInstance, int controlId, HFON
 
     // Every tile uses the app icon.
     hImages_ = ImageList_Create(kIconSize, kIconSize, ILC_COLOR32 | ILC_MASK, 1, 0);
-    HICON hIcon = static_cast<HICON>(LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_PASSWORDMANAGERWINDOWSUI),
+    HICON hIcon = static_cast<HICON>(LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_vsWindowsUi),
                                                 IMAGE_ICON, kIconSize, kIconSize, LR_DEFAULTCOLOR));
     if (hIcon)
     {

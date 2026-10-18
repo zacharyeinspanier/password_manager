@@ -27,7 +27,7 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="passwordManagerWindowsUI.h">
+    <ClInclude Include="vsWindowsUi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AddPasswordDialog.h">
@@ -47,7 +47,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="passwordManagerWindowsUI.cpp">
+    <ClCompile Include="vsWindowsUi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AddPasswordDialog.cpp">
@@ -62,15 +62,15 @@
     <ClCompile Include="ViewPasswordDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\app.cpp">
+    <ClCompile Include="..\..\..\app\app.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\sqlite\sqlite3.c">
+    <ClCompile Include="..\..\..\sqlite\sqlite3.c">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="passwordManagerWindowsUI.rc">
+    <ResourceCompile Include="vsWindowsUi.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -78,7 +78,7 @@
     <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="passwordManagerWindowsUI.ico">
+    <Image Include="vsWindowsUi.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
