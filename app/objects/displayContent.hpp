@@ -40,7 +40,7 @@ private:
     // Search Bar
     bool search_event_state;
     bool search_loop_exit;
-    std::string *search_term;
+    std::string search_term; // copy of the most recently requested term (owned here, so callers can reuse their buffer)
     std::mutex search_term_mutex;
     std::mutex search_loop_mutex;
     std::condition_variable search_term_cv;
@@ -63,8 +63,8 @@ private:
 
     // This thread will process searches and populate the vector search_results
     //
-    // Searches will find passwords with the string search_term in their URL member
-    // Partical matches are acceptable
+    // Searches find passwords whose URL, username or description contains search_term
+    // (partial, case-insensitive matches; see UserAccount::search)
     //
     // The thread must lock the mutex user_account_mutex in order to view UserAccount data
     void search_bar_process();
@@ -81,7 +81,7 @@ public:
     std::vector<password> get_display_list();
     std::vector<password> get_search_result();
     void operation_event(operation &new_operation);
-    void search_event(std::string &new_search_term);
+    void search_event(const std::string &new_search_term);
 };
 
 #endif

@@ -160,6 +160,8 @@ void test_five()
         test_content->operation_event(add_operation);
     }
 
+    // Let the operation thread finish the adds first; otherwise the search can run before they exist.
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     test_content->search_event(test_url);
 
     // Sleep to allow operation queue to empty
@@ -197,6 +199,8 @@ void test_six()
     add_operation.curr_password = add_password;
     test_content->operation_event(add_operation);
 
+    // Let the operation thread finish the adds first; otherwise the search can run before they exist.
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     test_content->search_event(test_desc);
 
     // Sleep to allow operation queue to empty

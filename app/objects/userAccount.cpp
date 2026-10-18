@@ -1,6 +1,65 @@
 #include "userAccount.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 std::string DEFAULT_STRING_VAL = "";
+
+namespace
+{
+    using password_index = std::unordered_map<std::string, std::vector<std::shared_ptr<password>>>;
+
+    // Lower-cases ASCII letters only, so UTF-8 multi-byte characters pass through unchanged.
+    std::string to_lower_ascii(std::string text)
+    {
+        for (char &c : text)
+        {
+            if (c >= 'A' && c <= 'Z')
+            {
+                c = static_cast<char>(c - 'A' + 'a');
+            }
+        }
+        return text;
+    }
+
+    // Moves a password from one key of a lookup map (url_map, username_map, description_map)
+    // to another, so the maps stay correct after modify_password changes a field.
+    void move_index_entry(password_index &index, const std::string &old_key, const std::string &new_key,
+                          const std::shared_ptr<password> &entry)
+    {
+        if (old_key == new_key)
+        {
+            return;
+        }
+        if (auto it = index.find(old_key); it != index.end())
+        {
+            std::vector<std::shared_ptr<password>> &entries = it->second;
+            entries.erase(std::remove(entries.begin(), entries.end(), entry), entries.end());
+            if (entries.empty())
+            {
+                index.erase(it);
+            }
+        }
+        index[new_key].push_back(entry);
+    }
+
+    // Adds every password whose map key contains `needle` (already lower-cased).
+    void collect_partial_matches(const password_index &index, const std::string &needle,
+                                 std::unordered_map<int, password> &search_result)
+    {
+        for (const auto &[key, entries] : index)
+        {
+            if (to_lower_ascii(key).find(needle) == std::string::npos)
+            {
+                continue;
+            }
+            for (const auto &entry : entries)
+            {
+                search_result.emplace(entry->p_id, *entry);
+            }
+        }
+    }
+}
 
 // userAccount implementation
 UserAccount::UserAccount(const std::string username, const int user_id, std::string *db_path)
@@ -252,8 +311,10 @@ void UserAccount::modify_password(const password *updated_password)
     {
         std::shared_ptr<password> password_ptr = this->pass_id_map[updated_password->p_id];
         std::lock_guard<std::mutex> password_ptr_mutex(password_ptr->password_mutex);
+        // Keep the lookup maps in sync with the new values, otherwise search finds the old ones.
         if (updated_password->username != DEFAULT_STRING_VAL)
         {
+            move_index_entry(this->username_map, password_ptr->username, updated_password->username, password_ptr);
             password_ptr->username = updated_password->username;
         }
         if (updated_password->encryped_password != DEFAULT_STRING_VAL)
@@ -262,10 +323,12 @@ void UserAccount::modify_password(const password *updated_password)
         }
         if (updated_password->url != DEFAULT_STRING_VAL)
         {
+            move_index_entry(this->url_map, password_ptr->url, updated_password->url, password_ptr);
             password_ptr->url = updated_password->url;
         }
         if (updated_password->description != DEFAULT_STRING_VAL)
         {
+            move_index_entry(this->description_map, password_ptr->description, updated_password->description, password_ptr);
             password_ptr->description = updated_password->description;
         }
 
@@ -296,34 +359,21 @@ int UserAccount::get_user_id()
     return this->user_id;
 }
 
+// Partial, case-insensitive search over url, username and description.
+// A password matches when any of those fields contains search_term (e.g. "goo" finds "Google.com").
+// An empty search term matches nothing.
 std::unordered_map<int, password> UserAccount::search(std::string search_term)
 {
     std::lock_guard<std::mutex> unordered_map_lock(this->unordered_map_mutex);
     std::unordered_map<int, password> search_result;
-    if (auto search = this->url_map.find(search_term); search != this->url_map.end())
+    const std::string needle = to_lower_ascii(search_term);
+    if (needle.empty())
     {
-        std::vector<std::shared_ptr<password>> url_search = (*search).second;
-        for (int i = 0; i < url_search.size(); ++i)
-        {
-            search_result.emplace(url_search[i].get()->p_id, *url_search[i].get());
-        }
+        return search_result;
     }
-    if (auto search = this->username_map.find(search_term); search != this->username_map.end())
-    {
-        std::vector<std::shared_ptr<password>> username_search = (*search).second;
-        for (int i = 0; i < username_search.size(); ++i)
-        {
-            search_result.emplace(username_search[i].get()->p_id, *username_search[i].get());
-        }
-    }
-    if (auto search = this->description_map.find(search_term); search != this->description_map.end())
-    {
-        std::vector<std::shared_ptr<password>> descrioption_search = (*search).second;
-        for (int i = 0; i < descrioption_search.size(); ++i)
-        {
-            search_result.emplace(descrioption_search[i].get()->p_id, *descrioption_search[i].get());
-        }
-    }
+    collect_partial_matches(this->url_map, needle, search_result);
+    collect_partial_matches(this->username_map, needle, search_result);
+    collect_partial_matches(this->description_map, needle, search_result);
     return search_result;
 }
 
