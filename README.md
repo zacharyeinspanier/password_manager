@@ -4,11 +4,10 @@ A desktop password manager written in C++. It stores a user's passwords (usernam
 
 ## Dependencies
 
-- **C++20 compiler.** The project is compiled with `-std=c++20` (`/std:c++20` in Visual Studio).
-- **SQLite.** Bundled in `sqlite/` and compiled into both GUI builds, so you don't need to install it separately.
-- **For the Windows UI:** Visual Studio 2026 with the **Desktop development with C++** workload (MSVC v145 toolset and a Windows 10/11 SDK).
-- **For the Qt UI:** Qt 6 (built with Qt 6.12, MinGW 64-bit kit) with the **Widgets**, **Sql** and **Linguist Tools** modules, plus Qt Creator and CMake 3.16 or newer.
-- **For the unit tests:** `g++` and a system SQLite library (`-lsqlite3`), run from a bash shell (macOS/Linux, or MSYS2 on Windows).
+- **C++20 compiler.** Compiled with `-std=c++20`
+- **SQLite.** SQLite Download Page
+- **Windows UI:** Visual Studio 2026 
+- **Qt UI:** Qt 6
 
 ## Setting `DB_PATH`
 
