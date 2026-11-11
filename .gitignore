@@ -35,7 +35,6 @@ ui/*.rc
 ui//.qmake.cache
 ui//.qmake.stash
 
-
 # qtcreator generated files
 ui/*.pro.user*
 ui/CMakeLists.txt.user*
@@ -77,8 +76,3 @@ ui/*.exe
 .env
 
 tests/output/*
-
-# Ignore build directories
-passwordManagerWindowsUI/passwordManagerWindowsUI/x64
-passwordManagerWindowsUI/x64
-passwordManagerWindowsUI/*.vs
