@@ -1,15 +1,24 @@
 # password_manager
 
-## Start App (MAC OS)
+A desktop password manager written in C++. It stores a user's passwords (username, password, URL and description) in a local SQLite database. The app can add, view, edit, delete and search entries. The core logic in `app/` is multi-threaded: separate threads handle user operations, search and writing changes back to the database.
 
-To use enviroment variables, an env file must be sourced and the qt_create.app must be run from the same terminal. 
+## Dependencies
 
-1. rename `.env.sample` to `.env`
-2. update the var `DP_PATH` to a absolute path to database file. Just get the absolute path to ./db/user_accounts.bd. 
-3. run the command `source .env`
-4. change directory to qt folder
-    - `cd /Users/$USER/qt`
-5. open qt `open "Qt Creator.app"`
+- **C++20 compiler.** Compiled with `-std=c++20`
+- **SQLite.** SQLite Download Page
+- **Qt UI:** Qt 6
 
-**NOTE** 
-This project was compiled using `-std=c++20`
+## Setting `DB_PATH`
+
+`DB_PATH` must be set to the **absolute path** of `db/user_accounts.db`. The Qt app and the unit tests both require it. The `DB_PATH` should be set as an enviroment variable.
+
+## Running the Tests
+
+The unit tests live in `tests/unit_tests/`:
+
+To run them:
+
+```
+cd tests
+./run_tests.sh
+```
