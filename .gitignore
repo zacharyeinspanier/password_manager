@@ -76,3 +76,5 @@ ui/*.exe
 .env
 
 tests/output/*
+
+.vscode

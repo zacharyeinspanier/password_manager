@@ -20,5 +20,13 @@ To run them:
 
 ```
 cd tests
-./run_tests.sh
+./run_
+tests.sh
 ```
+
+## Future work
+
+- Perform input parsing when creating an account to ensure:
+- Write encrypt and decrypt algorithm. 
+- Prevent SQL injection
+- The search algorithm improvement

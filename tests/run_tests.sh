@@ -1,3 +1,5 @@
+# This script runs the unit tests for the password manager application.
+# It compiles and executes both the User Account Tests and the Display Content Tests.
 source ../.env
 
 g++ unit_tests/userAccountTests.cpp -o ./output/userAccountTests -std=c++20 -lsqlite3
