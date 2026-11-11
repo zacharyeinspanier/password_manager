@@ -1,78 +1,77 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
-gui/qtCreatorUi/build
-gui/qtCreatorUi/*~
-gui/qtCreatorUi/*.autosave
-gui/qtCreatorUi/*.a
-gui/qtCreatorUi/*.core
-gui/qtCreatorUi/*.moc
-gui/qtCreatorUi/*.o
-gui/qtCreatorUi/*.obj
-gui/qtCreatorUi/*.orig
-gui/qtCreatorUi/*.rej
-gui/qtCreatorUi/*.so
-gui/qtCreatorUi/*.so.*
-gui/qtCreatorUi/*_pch.h.cpp
-gui/qtCreatorUi/*_resource.rc
-gui/qtCreatorUi/*.qm
-gui/qtCreatorUi/.#*
-gui/qtCreatorUi/*.*#
-gui/qtCreatorUi/core
-gui/qtCreatorUi/!core/
-gui/qtCreatorUi/tags
-gui/qtCreatorUi/.DS_Store
-gui/qtCreatorUi/.directory
-gui/qtCreatorUi/*.debug
-gui/qtCreatorUi/Makefile*
-gui/qtCreatorUi/*.prl
-gui/qtCreatorUi/*.app
-gui/qtCreatorUi/moc_*.cpp
-gui/qtCreatorUi/ui_*.h
-gui/qtCreatorUi/qrc_*.cpp
-gui/qtCreatorUi/Thumbs.db
-gui/qtCreatorUi/*.res
-gui/qtCreatorUi/*.rc
-gui/qtCreatorUi/.qmake.cache
-gui/qtCreatorUi/.qmake.stash
+ui/build
+ui/*~
+ui/*.autosave
+ui/*.a
+ui/*.core
+ui/*.moc
+ui/*.o
+ui/*.obj
+ui/*.orig
+ui/*.rej
+ui/*.so
+ui/*.so.*
+ui/*_pch.h.cpp
+ui/*_resource.rc
+ui/*.qm
+ui/.#*
+ui/*.*#
+ui/core
+ui/!core/
+ui/tags
+ui/.DS_Store
+ui/.directory
+ui/*.debug
+ui/Makefile*
+ui/*.prl
+ui/*.app
+ui/moc_*.cpp
+ui/ui_*.h
+ui/qrc_*.cpp
+ui/Thumbs.db
+ui/*.res
+ui/*.rc
+ui//.qmake.cache
+ui//.qmake.stash
+
 
 # qtcreator generated files
-gui/qtCreatorUi/*.pro.user*
-gui/qtCreatorUi/CMakeLists.txt.user*
-gui/qtCreatorUi/.qtcreator
+ui/*.pro.user*
+ui/CMakeLists.txt.user*
 
 # xemacs temporary files
-gui/qtCreatorUi/*.flc
+ui/*.flc
 
 # Vim temporary files
-gui/qtCreatorUi/.*.swp
+ui/.*.swp
 
 # Visual Studio generated files
-gui/qtCreatorUi/*.ib_pdb_index
-gui/qtCreatorUi/*.idb
-gui/qtCreatorUi/*.ilk
-gui/qtCreatorUi/*.pdb
-gui/qtCreatorUi/*.sln
-gui/qtCreatorUi/*.suo
-gui/qtCreatorUi/*.vcproj
-gui/qtCreatorUi/*vcproj.*.*.user
-gui/qtCreatorUi/*.ncb
-gui/qtCreatorUi/*.sdf
-gui/qtCreatorUi/*.opensdf
-gui/qtCreatorUi/*.vcxproj
-gui/qtCreatorUi/*vcxproj.*
+ui/*.ib_pdb_index
+ui/*.idb
+ui/*.ilk
+ui/*.pdb
+ui/*.sln
+ui/*.suo
+ui/*.vcproj
+ui/*vcproj.*.*.user
+ui/*.ncb
+ui/*.sdf
+ui/*.opensdf
+ui/*.vcxproj
+ui/*vcxproj.*
 
 # MinGW generated files
-gui/qtCreatorUi/*.Debug
-gui/qtCreatorUi/*.Release
-gui/qtCreatorUi/build
+ui/*.Debug
+ui/*.Release
 
 # Python byte code
-gui/qtCreatorUi/*.pyc
+ui/*.pyc
 
 # Binaries
 # --------
-gui/qtCreatorUi/*.dll
-gui/qtCreatorUi/*.exe
+ui/*.dll
+ui/*.exe
 
 # Env vars file
 .env
@@ -80,6 +79,6 @@ gui/qtCreatorUi/*.exe
 tests/output/*
 
 # Ignore build directories
-gui/vsWindowsUi/vsWindowsUi/x64
-gui/vsWindowsUi/x64
-gui/vsWindowsUi/*.vs
+passwordManagerWindowsUI/passwordManagerWindowsUI/x64
+passwordManagerWindowsUI/x64
+passwordManagerWindowsUI/*.vs
